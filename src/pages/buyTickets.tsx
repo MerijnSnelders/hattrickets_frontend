@@ -1,3 +1,4 @@
+import "../styles/buyTickets.css";
 import { useState } from "react";
 import { buyTicket } from "../services/ticketService";
 
