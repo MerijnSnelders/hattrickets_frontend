@@ -83,21 +83,6 @@ const Layout = () => {
       </main>
     </div>
   </div>
-    // <div>
-    //   <header>
-    //     <h1>My Ticket App</h1>
-    //     <nav>
-    //       <Link to="/">Home</Link>
-    //       <Link to="/buy-ticket">Buy Ticket</Link>
-    //     </nav>
-    //   </header>
-
-    //   <main>
-    //     <Outlet /> {/* This will load the current page */}
-    //   </main>
-
-    //   <footer>© 2025 Hatrickets</footer>
-    // </div>
   );
 };
 

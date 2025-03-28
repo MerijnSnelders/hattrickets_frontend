@@ -13,15 +13,8 @@ const Home = () =>{
     const fetchMatches = async () => {
       try {
         const data = await getUpComingMatches(39, 2023, 5);
-        console.log("Raw API Matches:", data);
-
-        const transformedMatches: Match[] = data.map((match: any) => ({
-          image: match.homeTeam.logo, 
-          title: `${match.homeTeam.name} vs ${match.awayTeam.name}`,
-          location: match.stadium.name,
-        }));
-        console.log("Transformed Matches:", transformedMatches);
-        setMatches(transformedMatches);
+        console.log("API Matches:", data);
+        setMatches(data);
       } 
       catch (error) {
         console.error(error);
