@@ -37,12 +37,12 @@ const Layout = () => {
             <a className="text-white text-sm font-medium leading-normal" href="#">
               Matches
             </a>
-            <Link className="text-white text-sm font-medium leading-normal" to="/stadium">
+            <Link className="text-white text-sm font-medium leading-normal" to="/stadiums">
               Stadiums
             </Link>
-            <a className="text-white text-sm font-medium leading-normal" href="#">
+            <Link className="text-white text-sm font-medium leading-normal" to="/teams">
               Teams
-            </a>
+            </Link>
             <Link className="text-white text-sm font-medium leading-normal" to="/buy-ticket">
               Buy Ticket
             </Link>
