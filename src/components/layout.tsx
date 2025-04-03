@@ -37,9 +37,9 @@ const Layout = () => {
             <a className="text-white text-sm font-medium leading-normal" href="#">
               Matches
             </a>
-            <a className="text-white text-sm font-medium leading-normal" href="#">
+            <Link className="text-white text-sm font-medium leading-normal" to="/stadium">
               Stadiums
-            </a>
+            </Link>
             <a className="text-white text-sm font-medium leading-normal" href="#">
               Teams
             </a>
