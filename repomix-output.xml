@@ -58,16 +58,25 @@ src/assets/react.svg
 src/components/featuredMatches.tsx
 src/components/layout.tsx
 src/components/matchCard.tsx
+src/components/SearchPage.tsx
+src/components/stadiumCard.tsx
+src/components/teamCard.tsx
 src/main.tsx
 src/pages/buyTickets.tsx
 src/pages/Home.tsx
+src/pages/Stadium.tsx
+src/pages/Team.tsx
 src/router.tsx
 src/services/matchService.ts
+src/services/stadiumService.ts
+src/services/teamService.ts
 src/services/ticketService.ts
 src/styles/buyTickets.css
 src/styles/global.css
 src/styles/home.css
 src/types/match.ts
+src/types/stadium.ts
+src/types/team.ts
 src/types/ticket.ts
 src/vite-env.d.ts
 tailwind.config.js
@@ -186,6 +195,72 @@ interface MatchCardProps {
 }
 </file>
 
+<file path="src/components/SearchPage.tsx">
+import { useState, useEffect, JSX } from "react";
+⋮----
+interface SearchPageProps<T> {
+  title: string;
+  placeholder: string;
+  fetchData: (search: string, page: number, size: number) => Promise<T[]>;
+  renderItem: (item: T) => JSX.Element;
+}
+⋮----
+const SearchPage = <T,>(
+⋮----
+const size = 10; // Items per page
+⋮----
+const fetchItems = async () =>
+⋮----
+onChange=
+</file>
+
+<file path="src/components/stadiumCard.tsx">
+import { Stadium } from "../types/stadium";
+⋮----
+interface StadiumCardProps {
+  stadium: Stadium;
+}
+</file>
+
+<file path="src/components/teamCard.tsx">
+import { Team } from "../types/team";
+⋮----
+interface teamCardProps {
+  team: Team;
+}
+</file>
+
+<file path="src/pages/Team.tsx">
+import { searchTeams } from "../services/teamService";
+import { Team } from "../types/team";
+import TeamCard from "../components/teamCard";
+import SearchPage from "../components/SearchPage";
+⋮----
+const TeamPage = () =>
+</file>
+
+<file path="src/services/stadiumService.ts">
+import axios from "axios";
+import { Stadium } from "../types/stadium";
+⋮----
+export const searchStadium = async (
+    searchQuery: string,
+    page: number,
+    size: number
+): Promise<Stadium[]> =>
+</file>
+
+<file path="src/services/teamService.ts">
+import axios from "axios";
+import { Team } from "../types/team";
+⋮----
+export const searchTeams = async (
+    searchQuery: string,
+    page: number,
+    size: number
+): Promise<Team[]> =>
+</file>
+
 <file path="src/styles/buyTickets.css">
 .ticket-container {
 ⋮----
@@ -218,6 +293,23 @@ export interface Match {
   title: string;
   location: string;
 }
+</file>
+
+<file path="src/types/stadium.ts">
+export interface Stadium {
+    id: number;
+    name: string;
+    capacity: number;
+    image: string;
+  }
+</file>
+
+<file path="src/types/team.ts">
+export interface Team {
+    id: number;
+    name: string;
+    logo: string;
+  }
 </file>
 
 <file path="src/types/ticket.ts">
@@ -262,16 +354,6 @@ darkMode: 'media', // Optional
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"]
-}
-</file>
-
-<file path="tsconfig.json">
-{
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
 }
 </file>
 
@@ -398,16 +480,6 @@ interface FeaturedMatchesProps {
 }
 </file>
 
-<file path="src/components/layout.tsx">
-import {Outlet, Link } from "react-router-dom";
-⋮----
-<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-⋮----
-{/* Render page content */}
-⋮----
-<Outlet /> {/* This will load the current page */}
-</file>
-
 <file path="src/main.tsx">
 import { createRoot } from 'react-dom/client'
 ⋮----
@@ -423,14 +495,13 @@ const handleSubmit = async (e: React.FormEvent) =>
 onChange=
 </file>
 
-<file path="src/router.tsx">
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+<file path="src/pages/Stadium.tsx">
+import { searchStadium } from "../services/stadiumService";
+import { Stadium } from "../types/stadium";
+import StadiumCard from "../components/stadiumCard";
+import SearchPage from "../components/SearchPage";
 ⋮----
-import Home from "./pages/Home";
-import BuyTicket from './pages/buyTickets';
-import Layout from './components/layout';
-⋮----
-const AppRouter = () =>
+const StadiumPage = () =>
 </file>
 
 <file path="src/services/matchService.ts">
@@ -451,6 +522,21 @@ import { TicketPurchase } from "../types/ticket";
 export const buyTicket = async (ticket: TicketPurchase): Promise<String> =>
 </file>
 
+<file path="tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "jsx": "react-jsx", 
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
+</file>
+
 <file path="src/pages/Home.tsx">
 import { Match } from "../types/match";
 import FeaturedMatches from "../components/featuredMatches";
@@ -469,6 +555,28 @@ const fetchMatches = async () =>
 //   <h2>Welcome to the Ticketing App</h2>
 //   <p>Find and buy tickets easily!</p>
 // </div>
+</file>
+
+<file path="src/components/layout.tsx">
+import {Outlet, Link } from "react-router-dom";
+⋮----
+<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+⋮----
+{/* Render page content */}
+⋮----
+<Outlet /> {/* This will load the current page */}
+</file>
+
+<file path="src/router.tsx">
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+⋮----
+import Home from "./pages/Home";
+import BuyTicket from './pages/buyTickets';
+import Layout from './components/layout';
+import StadiumPage  from './pages/Stadium';
+import TeamPage from './pages/Team';
+⋮----
+const AppRouter = () =>
 </file>
 
 </files>

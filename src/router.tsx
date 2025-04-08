@@ -5,6 +5,7 @@ import BuyTicket from './pages/buyTickets';
 import Layout from './components/layout';
 import StadiumPage  from './pages/Stadium';
 import TeamPage from './pages/Team';
+import MatchDetails from './pages/MatchDetails';
 
 const AppRouter = () => {
   return (
@@ -15,6 +16,7 @@ const AppRouter = () => {
           <Route path="/buy-ticket" element={<BuyTicket />} />
           <Route path="/stadiums" element={<StadiumPage />} />
           <Route path="/teams" element={<TeamPage />} />
+          <Route path="/match/:matchId" element={<MatchDetails />} />
         </Route>  
       </Routes>
     </Router>

@@ -16,6 +16,7 @@ const SearchPage = <T,>({ title, placeholder, fetchData, renderItem }: SearchPag
   useEffect(() => {
     const fetchItems = async () => {
       try {
+        console.clear();
         const data = await fetchData(search, page, size);
         setItems(data);
       } catch (error) {
