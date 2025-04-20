@@ -19,6 +19,7 @@ export const searchTeams = async (
           });
       const transformedTeams: Team[] = response.data.teams.map((team: any) => ({
         id: team.id,
+        apiId: team.apiId,
         name: team.name,
         logo: team.logo, 
       }));

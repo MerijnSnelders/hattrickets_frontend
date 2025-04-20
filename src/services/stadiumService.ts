@@ -19,6 +19,7 @@ export const searchStadium = async (
           });
       const transformedStadiums: Stadium[] = response.data.stadiums.map((stadium: any) => ({
         id: stadium.id,
+        apiId: stadium.apiId,
         name: stadium.name,
         capacity: stadium.capacity,
         image: stadium.image, 

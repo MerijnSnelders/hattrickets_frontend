@@ -2,7 +2,8 @@ import { Stadium } from "./stadium";
 import { Team } from "./team";
 
 export interface Match {
-  id: number
+  id: number;
+  apiId: number;
   image: string;
   title: string;
   location: string;

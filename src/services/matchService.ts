@@ -42,6 +42,7 @@ export const getMatchById = async(
       const match = response.data; 
       const transformedMatch: Match = {
         id: match.id,
+        apiId: match.apiId,
         image: match.homeTeam.logo,
         title: `${match.homeTeam.name} vs ${match.awayTeam.name}`,
         location: match.stadium.name,

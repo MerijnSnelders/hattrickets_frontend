@@ -44,12 +44,18 @@ export default function MatchDetails() {
             icon: 'success',
             title: 'Ticket purchased!',
             text: 'You have successfully bought a ticket.',
-            confirmButtonColor: '#3085d6',
+            confirmButtonColor: '#19E619',
             confirmButtonText: 'Awesome!',
           });
         console.log("Gekocht ticket:", response);
       } catch (error) {
-        alert("Kon ticket niet kopen.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to purchase ticket',
+          text: 'You were unable to purchase a ticket.',
+          confirmButtonColor: '#19E619',
+          confirmButtonText: 'Confirm'
+        })
         console.error(error);
       }
     };
