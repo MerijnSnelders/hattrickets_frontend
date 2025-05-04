@@ -1,11 +1,41 @@
 import {Outlet, Link } from "react-router-dom";
 import "../styles/global.css";
 import "tailwindcss";
+import { isLoggedIn, logout } from "@/services/loginService";
+import { useEffect, useState } from "react";
+
 
 
 
 
 const Layout = () => {
+
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      try {
+        const result = await isLoggedIn();
+        setLoggedIn(result !== null);
+      } catch {
+        setLoggedIn(false);
+      }
+    };
+    checkLogin();
+  }, []);
+
+  const handleLogout = async () => {
+    try{
+      await logout();
+      window.location.reload()
+    }
+    catch{
+      alert("logout failed");
+    }
+
+  }
+
+
   return (
     
     <div
@@ -68,12 +98,21 @@ const Layout = () => {
             </div>
           </label>
           <div className="flex gap-2">
-            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]">
-              <span className="truncate">Sign in</span>
-            </button>
-            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#244724] text-white text-sm font-bold leading-normal tracking-[0.015em]">
-              <span className="truncate">Register</span>
-            </button>
+            {loggedIn === null ? null : loggedIn ? (
+              <button onClick={handleLogout} className="flex min-w-[84px] items-center justify-center rounded-xl h-10 px-4 bg-red-600 text-white text-sm font-bold">
+                Logout
+              </button>  
+            ) : (
+              <>
+              <Link to="/login" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#19e619] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                <span className="truncate">Sign in</span>
+              </Link>
+              <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#244724] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                <span className="truncate">Register</span>
+              </button>
+              </>
+            )}
+           
           </div>
         </div>
       </header>

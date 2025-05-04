@@ -2,8 +2,8 @@ import axios from "axios";
 import { Match } from "../types/match";
 
 
-const API_URLGetUpComingMatches = "http://localhost:8080/matches/fixtures";
-const API_URLGetMatchById = "http://localhost:8080/matches/";
+const API_URLGetUpComingMatches = "http://localhost:8080/api/auth/matches/fixtures";
+const API_URLGetMatchById = "http://localhost:8080/api/auth/matches/";
 
 export const getUpComingMatches = async (
     leagueId: number,
@@ -13,6 +13,7 @@ export const getUpComingMatches = async (
     try {
       const response = await axios.get(API_URLGetUpComingMatches, {
         params: { leagueId, season, limit },
+        withCredentials: true,
       });
       const transformedMatches: Match[] = response.data.map((match: any) => ({
         id: match.id,
@@ -36,7 +37,7 @@ export const getMatchById = async(
   ): Promise<Match> => {
     try {
       const response = await axios.get(API_URLGetMatchById + matchId, {
-        
+        withCredentials: true,
       });
       console.log(response)
       const match = response.data; 

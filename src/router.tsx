@@ -6,6 +6,7 @@ import Layout from './components/layout';
 import StadiumPage  from './pages/Stadium';
 import TeamPage from './pages/Team';
 import MatchDetails from './pages/MatchDetails';
+import LoginPage from './pages/LoginPage';
 
 const AppRouter = () => {
   return (
@@ -17,6 +18,7 @@ const AppRouter = () => {
           <Route path="/stadiums" element={<StadiumPage />} />
           <Route path="/teams" element={<TeamPage />} />
           <Route path="/match/:matchId" element={<MatchDetails />} />
+          <Route path="/login" element={<LoginPage />} />
         </Route>  
       </Routes>
     </Router>

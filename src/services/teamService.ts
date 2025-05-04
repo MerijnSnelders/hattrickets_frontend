@@ -25,7 +25,7 @@ export const searchTeams = async (
       }));
       return transformedTeams;
     } catch (error) {
-      console.error("Error fetching stadiums:", error);
+      console.error("Error fetching teams:", error);
       return [];
     }
 };

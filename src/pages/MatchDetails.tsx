@@ -1,9 +1,11 @@
-import { useParams } from "react-router-dom";
+import {  useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getMatchById } from "../services/matchService";
 import { Match } from "../types/match";
 import { buyTicket } from "../services/ticketService";
 import Swal from 'sweetalert2';
+import { isLoggedIn } from "@/services/loginService";
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -12,14 +14,29 @@ export default function MatchDetails() {
     const [match, setMatch] = useState<Match>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number>();
+    const navigate = useNavigate();
   
     // 👇 Deze horen buiten de handler
-    const userId = 1;
+   // const userId = 1;
     const price = 12.5;
   
     useEffect(() => {
       async function fetchMatch() {
         try {
+          try{
+            const userIdData = await isLoggedIn();
+            if(userIdData === null){
+              navigate('/login')
+            }
+            else{
+              setUserId(userIdData)
+            }
+          }
+          catch{
+            setError("Failed to load match data");
+          }
+
           if (!matchId) throw new Error("No match ID");
           const id = parseInt(matchId, 10);
           const data = await getMatchById(id);
@@ -38,8 +55,10 @@ export default function MatchDetails() {
       try {
         if (!matchId) throw new Error("No match ID");
         const parsedMatchId = parseInt(matchId, 10);
-  
-        const response = await buyTicket({userId, matchId: parsedMatchId, price});
+        if (!userId) throw new Error("No user ID");
+        alert(userId);
+        const response = 1;
+       // const response = await buyTicket({userId: userId, matchId: parsedMatchId, price});
         Swal.fire({
             icon: 'success',
             title: 'Ticket purchased!',

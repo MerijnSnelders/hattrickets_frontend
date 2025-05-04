@@ -1,0 +1,137 @@
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { GoogleLogin } from "@react-oauth/google"
+import { useState } from "react"
+import { googleLogin, login } from "@/services/loginService"
+import {AuthRequest} from "@/types/auth"
+import { useNavigate } from 'react-router-dom';
+
+
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const GoogleLoginImpl = async(token: string | undefined) => {
+    if (!token) {
+      alert("Geen token ontvangen van Google");
+      return;
+    }
+
+    try {
+      const response = await googleLogin(token); // dit werkt het moet allleen beter 
+      console.log("Backend response:", response);
+      alert("Login geslaagd");
+      navigate('/');
+    } catch (err) {
+      console.error("Fout bij backend login", err);
+      alert("Login fout");
+    }
+  };
+
+  const Login = async () =>{
+    try{
+      alert("in Login ");
+    const request: AuthRequest = {
+      email: email,
+      password: password
+    }
+      login(request)
+      alert("inLogin success");
+      navigate('/');
+    }
+    catch (err: any) {
+      alert("Login failed: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardDescription>
+            Login with Google
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="grid gap-6">
+              <div className="flex flex-col gap-4">   
+                <GoogleLogin theme="outline" size="large" text="signin_with"
+                onSuccess={async (credentialResponse) => {
+                    console.log("Login Success:", credentialResponse);
+                    const token = credentialResponse.credential;
+                    GoogleLoginImpl(token)
+                  }
+                }
+                onError={() => {
+                  console.error("Login Failed");
+                  alert("Google login is mislukt");
+                  }
+                }
+                useOneTap={false} // optioneel: zet op true voor automatische popup
+                />           
+              </div>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground my-4">
+                <div className="flex-grow border-t border-border" />
+                <span className="px-1 bg-background">Or continue with</span>
+                <div className="flex-grow border-t border-border" />
+              </div>
+              <div className="grid gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Password</Label>
+                    <a
+                      href="#"
+                      className="ml-auto text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
+                </div>
+                <Button type="submit" className="w-full" onClick={() => Login()}>
+                  Login
+                </Button>
+              </div>
+              <div className="text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <a href="#" className="underline underline-offset-4">
+                  Sign up
+                </a>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
+  )
+}
