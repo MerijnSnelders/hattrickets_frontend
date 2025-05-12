@@ -57,8 +57,7 @@ export default function MatchDetails() {
         const parsedMatchId = parseInt(matchId, 10);
         if (!userId) throw new Error("No user ID");
         alert(userId);
-        const response = 1;
-       // const response = await buyTicket({userId: userId, matchId: parsedMatchId, price});
+        const response = await buyTicket({userId: userId, matchId: parsedMatchId, price});
         Swal.fire({
             icon: 'success',
             title: 'Ticket purchased!',

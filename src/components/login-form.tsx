@@ -27,34 +27,32 @@ export function LoginForm({
 
   const GoogleLoginImpl = async(token: string | undefined) => {
     if (!token) {
-      alert("Geen token ontvangen van Google");
+      console.error("Geen token ontvangen van Google");
       return;
     }
 
     try {
-      const response = await googleLogin(token); // dit werkt het moet allleen beter 
+      const response = await googleLogin(token); 
       console.log("Backend response:", response);
-      alert("Login geslaagd");
       navigate('/');
+      window.location.reload();
     } catch (err) {
       console.error("Fout bij backend login", err);
-      alert("Login fout");
     }
   };
 
   const Login = async () =>{
     try{
-      alert("in Login ");
     const request: AuthRequest = {
       email: email,
       password: password
     }
       login(request)
-      alert("inLogin success");
       navigate('/');
+      window.location.reload();
     }
     catch (err: any) {
-      alert("Login failed: " + (err.response?.data?.message || err.message));
+      console.error("Login failed: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -80,7 +78,6 @@ export function LoginForm({
                 }
                 onError={() => {
                   console.error("Login Failed");
-                  alert("Google login is mislukt");
                   }
                 }
                 useOneTap={false} // optioneel: zet op true voor automatische popup
