@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { GoogleLogin } from "@react-oauth/google"
 import { useState } from "react"
-import { googleLogin, login } from "@/services/loginService"
+import { googleLogin, login, saveToken } from "@/services/loginService"
 import {AuthRequest} from "@/types/auth"
 import { useNavigate } from 'react-router-dom';
 
@@ -34,6 +34,8 @@ export function LoginForm({
     try {
       const response = await googleLogin(token); 
       console.log("Backend response:", response);
+      saveToken(response.token);
+
       navigate('/');
       window.location.reload();
     } catch (err) {
@@ -47,7 +49,10 @@ export function LoginForm({
       email: email,
       password: password
     }
-      login(request)
+      alert("here");
+      const response = await login(request)
+      alert(response);
+      saveToken(response.token);
       navigate('/');
       window.location.reload();
     }
@@ -69,7 +74,7 @@ export function LoginForm({
           <form>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">   
-                <GoogleLogin theme="outline" size="large" text="signin_with"
+              <GoogleLogin theme="outline" size="large" text="signin_with"
                 onSuccess={async (credentialResponse) => {
                     console.log("Login Success:", credentialResponse);
                     const token = credentialResponse.credential;
@@ -81,7 +86,7 @@ export function LoginForm({
                   }
                 }
                 useOneTap={false} // optioneel: zet op true voor automatische popup
-                />           
+                /> 
               </div>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground my-4">
                 <div className="flex-grow border-t border-border" />
@@ -111,7 +116,7 @@ export function LoginForm({
                   </div>
                   <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
                 </div>
-                <Button type="submit" className="w-full" onClick={() => Login()}>
+                <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); Login()}}>
                   Login
                 </Button>
               </div>
@@ -132,3 +137,16 @@ export function LoginForm({
     </div>
   )
 }
+{/* <GoogleLogin theme="outline" size="large" text="signin_with"
+                onSuccess={async (credentialResponse) => {
+                    console.log("Login Success:", credentialResponse);
+                    const token = credentialResponse.credential;
+                    GoogleLoginImpl(token)
+                  }
+                }
+                onError={() => {
+                  console.error("Login Failed");
+                  }
+                }
+                useOneTap={false} // optioneel: zet op true voor automatische popup
+                />    */}

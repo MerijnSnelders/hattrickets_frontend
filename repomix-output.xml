@@ -1,5 +1,4 @@
 This file is a merged representation of the entire codebase, combined into a single document by Repomix.
-The content has been processed where content has been compressed (code blocks are separated by ⋮---- delimiter).
 
 <file_summary>
 This section contains a summary of this file.
@@ -15,7 +14,8 @@ The content is organized as follows:
 1. This summary section
 2. Repository information
 3. Directory structure
-4. Repository files, each consisting of:
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
   - File path as an attribute
   - Full contents of the file
 </file_format>
@@ -34,18 +34,14 @@ The content is organized as follows:
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
-- Content has been compressed - code blocks are separated by ⋮---- delimiter
 - Files are sorted by Git change count (files with more changes are at the bottom)
 </notes>
-
-<additional_info>
-
-</additional_info>
 
 </file_summary>
 
 <directory_structure>
 .gitignore
+components.json
 eslint.config.js
 index.html
 package.json
@@ -57,16 +53,26 @@ src/App.tsx
 src/assets/react.svg
 src/components/featuredMatches.tsx
 src/components/layout.tsx
+src/components/login-form.tsx
+src/components/LoginComponent.tsx
 src/components/matchCard.tsx
 src/components/SearchPage.tsx
 src/components/stadiumCard.tsx
 src/components/teamCard.tsx
+src/components/ui/button.tsx
+src/components/ui/card.tsx
+src/components/ui/input.tsx
+src/components/ui/label.tsx
+src/lib/utils.ts
 src/main.tsx
 src/pages/buyTickets.tsx
 src/pages/Home.tsx
+src/pages/LoginPage.tsx
+src/pages/MatchDetails.tsx
 src/pages/Stadium.tsx
 src/pages/Team.tsx
 src/router.tsx
+src/services/loginService.ts
 src/services/matchService.ts
 src/services/stadiumService.ts
 src/services/teamService.ts
@@ -74,6 +80,7 @@ src/services/ticketService.ts
 src/styles/buyTickets.css
 src/styles/global.css
 src/styles/home.css
+src/types/auth.ts
 src/types/match.ts
 src/types/stadium.ts
 src/types/team.ts
@@ -116,118 +123,424 @@ dist-ssr
 *.sw?
 </file>
 
-<file path="eslint.config.js">
-export default tseslint.config(
-</file>
-
-<file path="package.json">
+<file path="components.json">
 {
-  "name": "hattrickets_frontend",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/App.css",
+    "baseColor": "slate",
+    "cssVariables": true,
+    "prefix": ""
   },
-  "dependencies": {
-    "@tailwindcss/postcss": "^4.0.13",
-    "@tailwindcss/vite": "^4.0.13",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "axios": "^1.8.3",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.3.0"
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
   },
-  "devDependencies": {
-    "@eslint/js": "^9.21.0",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@types/react-router-dom": "^5.3.3",
-    "@vitejs/plugin-react-swc": "^3.8.0",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^9.21.0",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^15.15.0",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.13",
-    "typescript": "~5.7.2",
-    "typescript-eslint": "^8.24.1",
-    "vite": "^6.2.0"
-  }
+  "iconLibrary": "lucide"
 }
 </file>
 
-<file path="postcss.config.cjs">
+<file path="eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
 
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+)
+</file>
+
+<file path="postcss.config.cjs">
+module.exports = {
+  plugins: [
+    require('@tailwindcss/postcss'),
+    require('autoprefixer')
+  ],
+}
 </file>
 
 <file path="public/vite.svg">
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
 </file>
 
-<file path="src/App.css">
-#root {
-⋮----
-.logo {
-.logo:hover {
-.logo.react:hover {
-⋮----
-a:nth-of-type(2) .logo {
-⋮----
-.card {
-⋮----
-.read-the-docs {
-</file>
-
 <file path="src/assets/react.svg">
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
 </file>
 
-<file path="src/components/matchCard.tsx">
-import { Match } from "../types/match";
-⋮----
-interface MatchCardProps {
-  match: Match;
-}
-</file>
+<file path="src/components/LoginComponent.tsx">
+// import { useState } from "react";
+// import { GoogleLogin } from "@react-oauth/google";
+// import axios from "axios";
 
-<file path="src/components/SearchPage.tsx">
-import { useState, useEffect, JSX } from "react";
-⋮----
-interface SearchPageProps<T> {
-  title: string;
-  placeholder: string;
-  fetchData: (search: string, page: number, size: number) => Promise<T[]>;
-  renderItem: (item: T) => JSX.Element;
-}
-⋮----
-const SearchPage = <T,>(
-⋮----
-const size = 10; // Items per page
-⋮----
-const fetchItems = async () =>
-⋮----
-onChange=
+// const LoginPage = () => {
+
+//   const handleEmailLogin = async () => {
+//     try {
+//       const res = await axios.post("http://localhost:8080/auth/login", {
+//         email,
+//         password,
+//       });
+//       alert("Login successful: " + JSON.stringify(res.data));
+//     } catch (err: any) {
+//       alert("Login failed: " + (err.response?.data?.message || err.message));
+//     }
+//   };
+
+//   const handleGoogleLogin = async (credentialResponse: any) => {
+//     try {
+//       const res = await axios.post("http://localhost:8080/auth/google", {
+//         token: credentialResponse.credential,
+//       });
+//       alert("Google login success: " + JSON.stringify(res.data));
+//     } catch (err: any) {
+//       alert("Google login failed: " + (err.response?.data?.message || err.message));
+//     }
+//   };
+
+//   return (
+//     <div style={{ maxWidth: "400px", margin: "100px auto", textAlign: "center", background: "#244724"}}>
+//       <h2>SIGN IN TO HATTRICKETS</h2>
+//       <p>Welcome user, please sign in to continue</p>
+
+//       <div style={{ marginBottom: "20px" }}>
+//         <GoogleLogin onSuccess={handleGoogleLogin} onError={() => alert("Google Login Error")} />
+//       </div>
+
+//       <div style={{ margin: "20px 0", display: "flex", alignItems: "center" }}>
+//         <hr style={{ flex: 1 }} />
+//         <span style={{ margin: "0 10px" }}>or</span>
+//         <hr style={{ flex: 1 }} />
+//       </div>
+
+//       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+//         <input
+//           type="email"
+//           placeholder="Email"
+//           value={email}
+//           onChange={(e) => setEmail(e.target.value)}
+//           style={{ padding: "10px", fontSize: "16px" }}
+//         />
+//         <input
+//           type="password"
+//           placeholder="Password"
+//           value={password}
+//           onChange={(e) => setPassword(e.target.value)}
+//           style={{ padding: "10px", fontSize: "16px" }}
+//         />
+//         <button onClick={handleEmailLogin} style={{ padding: "10px", fontSize: "16px" }}>
+//           Sign In
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default LoginPage;
 </file>
 
 <file path="src/components/stadiumCard.tsx">
 import { Stadium } from "../types/stadium";
-⋮----
+
 interface StadiumCardProps {
   stadium: Stadium;
 }
+
+const StadiumCard: React.FC<StadiumCardProps> = ({ stadium }) => {
+    return (
+      <div className="flex flex-col gap-4 rounded-lg min-w-60 flex-1">
+        <div
+          className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl"
+          style={{ backgroundImage: `url(${stadium.image})` }}
+        />
+        <div>
+          <p className="text-white text-base font-medium leading-normal">{stadium.name}</p>
+          <p className="text-[#93c893] text-sm font-normal leading-normal">Capacity: {stadium.capacity}</p>
+        </div>
+      </div>
+    );
+  };
+  
+  export default StadiumCard;
 </file>
 
 <file path="src/components/teamCard.tsx">
 import { Team } from "../types/team";
-⋮----
+
 interface teamCardProps {
   team: Team;
 }
+
+const teamCard: React.FC<teamCardProps> = ({ team }) => {
+    return (
+      <div className="flex flex-col gap-4 rounded-lg min-w-60 flex-1">
+        <div
+          className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl"
+          style={{ backgroundImage: `url(${team.logo})` }}
+        />
+        <div>
+          <p className="text-white text-base font-medium leading-normal">{team.name}</p>
+        </div>
+      </div>
+    );
+  };
+  
+  export default teamCard;
+</file>
+
+<file path="src/components/ui/button.tsx">
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  {
+    variants: {
+      variant: {
+        default:
+         "bg-[#19e619] text-white shadow-xs hover:bg-[#244724] rounded-xl",
+        destructive:
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+</file>
+
+<file path="src/components/ui/card.tsx">
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Card({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "bg-[#008000] text-card-foreground  text-white flex flex-col gap-6 rounded-xl py-6 shadow-sm",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn("leading-none font-semibold", className)}
+      {...props}
+    />
+  )
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-6", className)}
+      {...props}
+    />
+  )
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+}
+</file>
+
+<file path="src/components/ui/input.tsx">
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "form-input flex w-full min-w-0 p-3 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#244724] focus:border-none h-full placeholder:text-[#93c893] px-4 pl-2 text-base font-normal leading-normal",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+</file>
+
+<file path="src/components/ui/label.tsx">
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+
+import { cn } from "@/lib/utils"
+
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  return (
+    <LabelPrimitive.Root
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Label }
+</file>
+
+<file path="src/lib/utils.ts">
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+</file>
+
+<file path="src/pages/LoginPage.tsx">
+import { LoginForm } from "@/components/login-form";
+//import LoginComponent from "../components/LoginComponent";
+
+const LoginPage = () =>{
+    return(
+        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+        <div className="flex w-full max-w-sm flex-col gap-6">
+          <LoginForm />
+        </div>
+      </div>
+    );
+}
+export default LoginPage;
 </file>
 
 <file path="src/pages/Team.tsx">
@@ -235,80 +548,132 @@ import { searchTeams } from "../services/teamService";
 import { Team } from "../types/team";
 import TeamCard from "../components/teamCard";
 import SearchPage from "../components/SearchPage";
-⋮----
-const TeamPage = () =>
+
+const TeamPage = () => {
+  return (
+    <SearchPage<Team>
+      title="Search a team"
+      placeholder="Type the name of a team..."
+      fetchData={searchTeams}
+      renderItem={(team) => <TeamCard key={team.id} team={team} />}
+    />
+  );
+};
+
+export default TeamPage;
 </file>
 
-<file path="src/services/stadiumService.ts">
+<file path="src/services/loginService.ts">
 import axios from "axios";
-import { Stadium } from "../types/stadium";
-⋮----
-export const searchStadium = async (
-    searchQuery: string,
-    page: number,
-    size: number
-): Promise<Stadium[]> =>
-</file>
+import { AuthRequest, AuthResponse, SignupRequest } from "@/types/auth";
+const API_URL = "http://localhost:8080/api/auth/users"
 
-<file path="src/services/teamService.ts">
-import axios from "axios";
-import { Team } from "../types/team";
-⋮----
-export const searchTeams = async (
-    searchQuery: string,
-    page: number,
-    size: number
-): Promise<Team[]> =>
-</file>
+export const login = async (data: AuthRequest): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/login`, data);
+  return response.data;
+};
 
-<file path="src/styles/buyTickets.css">
-.ticket-container {
-⋮----
-button {
-⋮----
-button:hover {
+export const signup = async (data: SignupRequest): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/signup`, data,
+    { withCredentials: true,});
+  return response.data;
+};
+
+export const googleLogin = async (googleToken: string): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/googleLogin`, 
+    { token: googleToken},{  withCredentials: true, });
+  return response.data;
+};
+
+export const isLoggedIn = async (): Promise<number | null> => {
+  try{
+    const response = await axios.get(`${API_URL}/isLoggedIn`,
+      {withCredentials: true,});
+      return response.data;
+  }
+  catch{
+    return null
+  }    
+}
+
+export const logout = async () : Promise<void> => {
+  await axios.post(`${API_URL}/logout`, {} ,
+    {withCredentials: true}
+  )
+}
+
+export const saveToken = (token: string) => {
+  localStorage.setItem("token", token);
+};
 </file>
 
 <file path="src/styles/global.css">
-html, body {
-⋮----
-#root {
-⋮----
-header {
-⋮----
-nav a {
-⋮----
-.main-content {
-⋮----
-footer {
-</file>
+@import "tailwindcss";
 
-<file path="src/styles/home.css">
-.home-container {
-</file>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  #root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  header {
+    color: white;
+    text-align: center;
+  }
+  
+  nav a {
+    color: white;
+    margin: 0 15px;
+    text-decoration: none;
+  }
+  
 
-<file path="src/types/match.ts">
-export interface Match {
-  image: string;
-  title: string;
-  location: string;
-}
-</file>
-
-<file path="src/types/stadium.ts">
-export interface Stadium {
-    id: number;
-    name: string;
-    capacity: number;
-    image: string;
+  .main-content {
+    flex: 1;
+  }
+  
+  footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    bottom: 0;
   }
 </file>
 
-<file path="src/types/team.ts">
-export interface Team {
-    id: number;
-    name: string;
-    logo: string;
+<file path="src/styles/home.css">
+@import "tailwindcss";
+
+.home-container {
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+  }
+</file>
+
+<file path="src/types/auth.ts">
+export interface AuthRequest {
+    email: string;
+    password: string;
+  }
+  
+  export interface SignupRequest {
+    email: string;
+    password: string;
+  }
+  
+  export interface AuthResponse {
+    token: string;
   }
 </file>
 
@@ -325,36 +690,14 @@ export interface TicketPurchase {
 </file>
 
 <file path="tailwind.config.js">
-darkMode: 'media', // Optional
-</file>
-
-<file path="tsconfig.app.json">
-{
-  "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+module.exports = {
+  content: ['./src/**/*.{html,js,jsx,ts,tsx}'],
+  darkMode: 'media', // Optional
+  theme: {
+    extend: {},
   },
-  "include": ["src"]
-}
+  plugins: [],
+};
 </file>
 
 <file path="tsconfig.node.json">
@@ -382,14 +725,6 @@ darkMode: 'media', // Optional
   },
   "include": ["vite.config.ts"]
 }
-</file>
-
-<file path="vite.config.ts">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import tailwindcss from '@tailwindcss/vite'
-⋮----
-// https://vite.dev/config/
 </file>
 
 <file path="index.html">
@@ -465,34 +800,497 @@ export default tseslint.config({
 ```
 </file>
 
+<file path="src/App.css">
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+</file>
+
 <file path="src/App.tsx">
+import "./styles/global.css";
 import AppRouter from "./router";
-⋮----
-const App = () =>
+
+
+const App = () => {
+  return <AppRouter />;
+};
+
+
+export default App
 </file>
 
 <file path="src/components/featuredMatches.tsx">
 import { Match } from "../types/match";
 import MatchCard from "./matchCard";
-⋮----
+
 interface FeaturedMatchesProps {
   matches: Match[];
 }
+
+const FeaturedMatches: React.FC<FeaturedMatchesProps> = ({ matches }) => {
+  return (
+    <div>
+      <h3 className="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
+        Featured Matches
+      </h3>
+      <div className="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-stretch p-4 gap-3">
+          {matches.map((match, index) => (
+            <MatchCard key={index} match={match} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FeaturedMatches;
 </file>
 
-<file path="src/main.tsx">
-import { createRoot } from 'react-dom/client'
-⋮----
-import App from './App.tsx'
+<file path="src/components/login-form.tsx">
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { GoogleLogin } from "@react-oauth/google"
+import { useState } from "react"
+import { googleLogin, login, saveToken } from "@/services/loginService"
+import {AuthRequest} from "@/types/auth"
+import { useNavigate } from 'react-router-dom';
+
+
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const GoogleLoginImpl = async(token: string | undefined) => {
+    if (!token) {
+      console.error("Geen token ontvangen van Google");
+      return;
+    }
+
+    try {
+      const response = await googleLogin(token); 
+      console.log("Backend response:", response);
+      navigate('/');
+      window.location.reload();
+    } catch (err) {
+      console.error("Fout bij backend login", err);
+    }
+  };
+
+  const Login = async () =>{
+    try{
+    const request: AuthRequest = {
+      email: email,
+      password: password
+    }
+      const response = await login(request)
+      alert(response);
+      saveToken(response.token);
+      navigate('/');
+      window.location.reload();
+    }
+    catch (err: any) {
+      console.error("Login failed: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardDescription>
+            Login with Google
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="grid gap-6">
+              <div className="flex flex-col gap-4">   
+                <GoogleLogin theme="outline" size="large" text="signin_with"
+                onSuccess={async (credentialResponse) => {
+                    console.log("Login Success:", credentialResponse);
+                    const token = credentialResponse.credential;
+                    GoogleLoginImpl(token)
+                  }
+                }
+                onError={() => {
+                  console.error("Login Failed");
+                  }
+                }
+                useOneTap={false} // optioneel: zet op true voor automatische popup
+                />           
+              </div>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground my-4">
+                <div className="flex-grow border-t border-border" />
+                <span className="px-1 bg-background">Or continue with</span>
+                <div className="flex-grow border-t border-border" />
+              </div>
+              <div className="grid gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Password</Label>
+                    <a
+                      href="#"
+                      className="ml-auto text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
+                </div>
+                <Button type="submit" className="w-full" onClick={() => Login()}>
+                  Login
+                </Button>
+              </div>
+              <div className="text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <a href="#" className="underline underline-offset-4">
+                  Sign up
+                </a>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/components/matchCard.tsx">
+import { Link } from "react-router-dom";
+import { Match } from "../types/match";
+
+interface MatchCardProps {
+  match: Match;
+}
+
+const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
+  return (
+    <Link to={`/match/${match.id}`}>
+      <div className="flex flex-col gap-4 rounded-lg min-w-60 flex-1">
+        <div
+          className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl"
+          style={{ backgroundImage: `url(${match.image})` }}
+        />
+        <div>
+          <p className="text-white text-base font-medium leading-normal">{match.title}</p>
+          <p className="text-[#93c893] text-sm font-normal leading-normal">{match.location}</p>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+export default MatchCard;
+</file>
+
+<file path="src/components/SearchPage.tsx">
+import { useState, useEffect, JSX } from "react";
+
+interface SearchPageProps<T> {
+  title: string;
+  placeholder: string;
+  fetchData: (search: string, page: number, size: number) => Promise<T[]>;
+  renderItem: (item: T) => JSX.Element;
+}
+
+const SearchPage = <T,>({ title, placeholder, fetchData, renderItem }: SearchPageProps<T>) => {
+  const [items, setItems] = useState<T[]>([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const size = 10; // Items per page
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        console.clear();
+        const data = await fetchData(search, page, size);
+        setItems(data);
+      } catch (error) {
+        console.error(`Error loading ${title.toLowerCase()}s:`, error);
+      }
+    };
+
+    fetchItems();
+  }, [search, page]);
+
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      <h1 className="text-2xl font-bold text-white">{title}</h1>
+      <div className="flex w-full items-center justify-center rounded-xl h-14 bg-[#244724]">
+        <div className="text-[#93c893] flex items-center justify-center pl-4 rounded-l-xl">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+            <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="form-input w-full rounded-r-xl text-white focus:outline-none border-none bg-[#244724] placeholder:text-[#93c893] px-4"
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {items.length > 0 ? items.map(renderItem) : <p className="text-gray-400">No results found.</p>}
+      </div>
+      <div className="flex justify-between">
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+          disabled={page === 0}
+          className="px-4 py-2 bg-gray-700 rounded-lg text-white disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <button onClick={() => setPage((prev) => prev + 1)} className="px-4 py-2 bg-gray-700 rounded-lg text-white">
+          Next
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default SearchPage;
 </file>
 
 <file path="src/pages/buyTickets.tsx">
+import "../styles/buyTickets.css";
 import { useState } from "react";
 import { buyTicket } from "../services/ticketService";
-⋮----
-const handleSubmit = async (e: React.FormEvent) =>
-⋮----
-onChange=
+
+const BuyTicket = () => {
+  const [userId, setUserId] = useState<number>(1);
+  const [matchId, setMatchId] = useState<number>(1);
+  const [price, setPrice] = useState<number>(12.5);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await buyTicket({ userId, matchId, price });
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4">
+      <h2 className="text-2xl font-bold mb-4">Buy a Ticket</h2>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+        <input
+          type="number"
+          value={userId}
+          onChange={(e) => setUserId(Number(e.target.value))}
+          placeholder="User ID"
+          className="border p-2 rounded"
+        />
+        <input
+          type="number"
+          value={matchId}
+          onChange={(e) => setMatchId(Number(e.target.value))}
+          placeholder="Match ID"
+          className="border p-2 rounded"
+        />
+        <input
+          type="number"
+          value={price}
+          onChange={(e) => setPrice(Number(e.target.value))}
+          placeholder="Price"
+          className="border p-2 rounded"
+        />
+        <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white p-2 rounded">
+          Buy Ticket
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default BuyTicket;
 </file>
 
 <file path="src/pages/Stadium.tsx">
@@ -500,26 +1298,383 @@ import { searchStadium } from "../services/stadiumService";
 import { Stadium } from "../types/stadium";
 import StadiumCard from "../components/stadiumCard";
 import SearchPage from "../components/SearchPage";
-⋮----
-const StadiumPage = () =>
+
+const StadiumPage = () => {
+  return (
+    <SearchPage<Stadium>
+      title="Search a stadium"
+      placeholder="Type the name of a stadium..."
+      fetchData={searchStadium}
+      renderItem={(stadium) => <StadiumCard key={stadium.id} stadium={stadium} />}
+    />
+  );
+};
+
+export default StadiumPage;
 </file>
 
-<file path="src/services/matchService.ts">
+<file path="src/services/stadiumService.ts">
 import axios from "axios";
-import { Match } from "../types/match";
-⋮----
-export const getUpComingMatches = async (
-    leagueId: number,
-    season: number,
-    limit: number
-): Promise<Match[]> =>
+import { Stadium } from "../types/stadium";
+
+
+const API_URL = "http://localhost:8080/stadiums/search"; 
+
+export const searchStadium = async (
+    searchQuery: string,
+    page: number,
+    size: number
+  ): Promise<Stadium[]> => {
+    try {
+        const response = await axios.get(API_URL, {
+            params:{
+                searchQuery,
+                page,
+                size,
+            }
+          });
+      const transformedStadiums: Stadium[] = response.data.stadiums.map((stadium: any) => ({
+        id: stadium.id,
+        apiId: stadium.apiId,
+        name: stadium.name,
+        capacity: stadium.capacity,
+        image: stadium.image, 
+      }));
+      return transformedStadiums;
+    } catch (error) {
+      console.error("Error fetching stadiums:", error);
+      return [];
+    }
+};
 </file>
 
 <file path="src/services/ticketService.ts">
 import axios from "axios";
 import { TicketPurchase } from "../types/ticket";
-⋮----
-export const buyTicket = async (ticket: TicketPurchase): Promise<String> =>
+
+const API_URL = "http://localhost:8080/tickets/buy"; 
+export const buyTicket = async (ticket: TicketPurchase): Promise<String> => {
+  try {
+    await axios.post(API_URL, ticket);
+    return "Ticket purchased successfully";
+  } 
+  catch (error) {
+    throw new Error((error as Error).message);
+  }
+};
+</file>
+
+<file path="src/styles/buyTickets.css">
+@import "tailwindcss";
+
+.ticket-container {
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: darkgreen;
+  }
+</file>
+
+<file path="src/types/stadium.ts">
+export interface Stadium {
+    id: number;
+    apiId:number;
+    name: string;
+    capacity: number;
+    image: string;
+  }
+</file>
+
+<file path="src/types/team.ts">
+export interface Team {
+    id: number;
+    apiId: number;
+    name: string;
+    logo: string;
+  }
+</file>
+
+<file path="tsconfig.app.json">
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import path from "path"
+import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  css: {
+    postcss: './postcss.config.js'
+  }
+});
+</file>
+
+<file path="package.json">
+{
+  "name": "hattrickets_frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-ui/react-label": "^2.1.4",
+    "@radix-ui/react-slot": "^1.2.0",
+    "@react-oauth/google": "^0.12.1",
+    "@tailwindcss/postcss": "^4.0.13",
+    "@tailwindcss/vite": "^4.0.13",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "axios": "^1.9.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.503.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.3.0",
+    "sweetalert2": "^11.17.2",
+    "tailwind-merge": "^3.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@types/react-router-dom": "^5.3.3",
+    "@vitejs/plugin-react-swc": "^3.8.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^15.15.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.0.13",
+    "tw-animate-css": "^1.2.8",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.24.1",
+    "vite": "^6.2.0"
+  }
+}
+</file>
+
+<file path="src/main.tsx">
+import { createRoot } from 'react-dom/client'
+import "./styles/global.css";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+import App from './App.tsx'
+
+createRoot(document.getElementById('root')!).render( 
+    <GoogleOAuthProvider clientId="470943653508-sb09ekl3nkmhsham3clnk50anv7fs6cn.apps.googleusercontent.com">
+        <App />
+    </GoogleOAuthProvider>
+)
+</file>
+
+<file path="src/pages/Home.tsx">
+import "../styles/home.css";
+import { Match } from "../types/match";
+import FeaturedMatches from "../components/featuredMatches";
+import { useEffect, useState } from "react";
+import { getUpComingMatches } from "../services/matchService";
+
+const Home = () =>{
+
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const data = await getUpComingMatches(39, 2023, 5);
+        console.log("API Matches:", data);
+        setMatches(data);
+      } 
+      catch (error) {
+        console.error(error);
+      } 
+      finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMatches();
+  }, []);
+
+
+
+  return (<div className="px-40 flex flex-1 justify-center py-5">
+    <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
+      {/* Hero Section */}
+      <div className="@container">
+        <div className="@[480px]:p-4">
+          <div
+            className="flex min-h-[480px] flex-col gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-xl items-center justify-center p-4"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://www.cursor.tue.nl/fileadmin/_processed_/6/1/csm_Profpraat_PSV-stadion_Shutterstock_Uslatar_102e37489c.jpg")',
+            }}
+          >
+            <div className="flex flex-col gap-2 text-center">
+              <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl">
+                Exclusive tickets for the biggest matches
+              </h1>
+              <h2 className="text-white text-sm font-normal leading-normal @[480px]:text-base">
+                Join us on our mission to build the ultimate fan experience. Sign up to be the first to get exclusive access to tickets, experiences and more.
+              </h2>
+            </div>
+            <label className="flex flex-col min-w-40 h-14 w-full max-w-[480px] @[480px]:h-16">
+              <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
+                <div
+                  className="text-[#93c893] flex border border-[#346534] bg-[#1a321a] items-center justify-center pl-[15px] rounded-l-xl border-r-0"
+                  data-icon="MagnifyingGlass"
+                  data-size="20px"
+                  data-weight="regular"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+                  </svg>
+                </div>
+                <input
+                  placeholder="Enter your email address"
+                  //className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border border-[#346534] bg-[#1a321a] focus:border-[#346534] h-full placeholder:text-[#93c893] px-[15px] rounded-r-none border-r-0 pr-2 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal"
+                  className="form-input flex w-full min-w-0 flex-1 resize-none rounded-r-none border-r-0 pr-2 rounded-l-none  overflow-hidden text-white focus:outline-0 focus:ring-0 border border-[#346534] bg-[#1a321a] focus:border-[#346534] h-full placeholder:text-[#93c893] px-[15px] border-l-0 pl-2 text-sm font-normal leading-normal"
+                />
+                <div className="flex items-center justify-center rounded-r-xl border-l-0 border border-[#346534] bg-[#1a321a] pr-[7px]"> 
+                  <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]">
+                    <span className="truncate">Sign up</span>
+                  </button>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+      {/* Featured Matches Section */}
+      {loading ? (
+          <p className="text-white text-sm font-normal">Loading matches...</p>
+        ) : (
+          <FeaturedMatches matches={matches} />
+        )}
+
+    </div>
+  </div>
+    // <div className="home-container">
+    //   <h2>Welcome to the Ticketing App</h2>
+    //   <p>Find and buy tickets easily!</p>
+    // </div>
+
+  );
+}
+export default Home;
+</file>
+
+<file path="src/services/teamService.ts">
+import axios from "axios";
+import { Team } from "../types/team";
+
+
+const API_URL = "http://localhost:8080/teams/search"; 
+
+export const searchTeams = async (
+    searchQuery: string,
+    page: number,
+    size: number
+  ): Promise<Team[]> => {
+    try {
+        const response = await axios.get(API_URL, {
+            params:{
+                searchQuery,
+                page,
+                size,
+            }
+          });
+      const transformedTeams: Team[] = response.data.teams.map((team: any) => ({
+        id: team.id,
+        apiId: team.apiId,
+        name: team.name,
+        logo: team.logo, 
+      }));
+      return transformedTeams;
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      return [];
+    }
+};
+</file>
+
+<file path="src/types/match.ts">
+import { Stadium } from "./stadium";
+import { Team } from "./team";
+
+export interface Match {
+  id: number;
+  apiId: number;
+  image: string;
+  title: string;
+  location: string;
+  awayTeam: Team;
+  homeTeam: Team;
+  stadium: Stadium;
+  soldTickets: number;
+}
 </file>
 
 <file path="tsconfig.json">
@@ -532,51 +1687,355 @@ export const buyTicket = async (ticket: TicketPurchase): Promise<String> =>
   "compilerOptions": {
     "jsx": "react-jsx", 
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   }
 }
 </file>
 
-<file path="src/pages/Home.tsx">
-import { Match } from "../types/match";
-import FeaturedMatches from "../components/featuredMatches";
+<file path="src/pages/MatchDetails.tsx">
+import {  useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getUpComingMatches } from "../services/matchService";
-⋮----
-const fetchMatches = async () =>
-⋮----
-{/* Hero Section */}
-⋮----
-//className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border border-[#346534] bg-[#1a321a] focus:border-[#346534] h-full placeholder:text-[#93c893] px-[15px] rounded-r-none border-r-0 pr-2 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal"
-⋮----
-{/* Featured Matches Section */}
-⋮----
-// <div className="home-container">
-//   <h2>Welcome to the Ticketing App</h2>
-//   <p>Find and buy tickets easily!</p>
-// </div>
+import { getMatchById } from "../services/matchService";
+import { Match } from "../types/match";
+import { buyTicket } from "../services/ticketService";
+import Swal from 'sweetalert2';
+import { isLoggedIn } from "@/services/loginService";
+import { useNavigate } from 'react-router-dom';
+
+
+
+export default function MatchDetails() {
+    const { matchId } = useParams<{ matchId: string }>();
+    const [match, setMatch] = useState<Match>();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number>();
+    const navigate = useNavigate();
+  
+    // 👇 Deze horen buiten de handler
+   // const userId = 1;
+    const price = 12.5;
+  
+    useEffect(() => {
+      async function fetchMatch() {
+        try {
+          try{
+            const userIdData = await isLoggedIn();
+            if(userIdData === null){
+              navigate('/login')
+            }
+            else{
+              setUserId(userIdData)
+            }
+          }
+          catch{
+            setError("Failed to load match data");
+          }
+
+          if (!matchId) throw new Error("No match ID");
+          const id = parseInt(matchId, 10);
+          const data = await getMatchById(id);
+          setMatch(data);
+        } catch (error) {
+          setError("Failed to load match data");
+        } finally {
+          setLoading(false);
+        }
+      }
+  
+      if (matchId) fetchMatch();
+    }, [matchId]);
+  
+    const handleBuyTicket = async () => {
+      try {
+        if (!matchId) throw new Error("No match ID");
+        const parsedMatchId = parseInt(matchId, 10);
+        if (!userId) throw new Error("No user ID");
+        alert(userId);
+        const response = await buyTicket({userId: userId, matchId: parsedMatchId, price});
+        Swal.fire({
+            icon: 'success',
+            title: 'Ticket purchased!',
+            text: 'You have successfully bought a ticket.',
+            confirmButtonColor: '#19E619',
+            confirmButtonText: 'Awesome!',
+          });
+        console.log("Gekocht ticket:", response);
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to purchase ticket',
+          text: 'You were unable to purchase a ticket.',
+          confirmButtonColor: '#19E619',
+          confirmButtonText: 'Confirm'
+        })
+        console.error(error);
+      }
+    };
+  
+    if (loading) return <div className="p-4">Loading...</div>;
+    if (error) return <div className="p-4 text-red-500">{error}</div>;
+    if (!match) return <div className="p-4">No data found</div>;
+  
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4 text-white">Match Details</h1>
+        <div className="bg-[#008000] text-white rounded-2xl shadow p-6 flex items-center justify-between">
+          <div className="text-center">
+            <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-16 mx-auto" />
+            <p>{match.homeTeam.name}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-white">
+              {match.stadium.name}
+            </p>
+            <p className="text-sm text-white">
+              sold tickets: {match.soldTickets}
+            </p>
+            <button
+              onClick={handleBuyTicket}
+              className="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]"
+            >
+              <span className="truncate">Buy ticket</span>
+            </button>
+          </div>
+          <div className="text-center">
+            <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-16 mx-auto" />
+            <p>{match.awayTeam.name}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 </file>
 
 <file path="src/components/layout.tsx">
 import {Outlet, Link } from "react-router-dom";
-⋮----
-<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-⋮----
-{/* Render page content */}
-⋮----
-<Outlet /> {/* This will load the current page */}
+import "../styles/global.css";
+import "tailwindcss";
+import { isLoggedIn, logout } from "@/services/loginService";
+import { useEffect, useState } from "react";
+
+
+
+
+
+const Layout = () => {
+
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      try {
+        const result = await isLoggedIn();
+        setLoggedIn(result !== null);
+      } catch {
+        setLoggedIn(false);
+      }
+    };
+    checkLogin();
+  }, []);
+
+  const handleLogout = async () => {
+    try{
+      await logout();
+      window.location.reload()
+    }
+    catch{
+      alert("logout failed");
+    }
+
+  }
+
+
+  return (
+    
+    <div
+    className="relative flex min-h-screen flex-col bg-[#112211] dark group/design-root overflow-x-hidden"
+    style={{ fontFamily: '"Space Grotesk", "Noto Sans", sans-serif' }}
+  >
+    <div className="layout-container flex h-full grow flex-col">
+      <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#244724] px-10 py-3">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 text-white">
+            <div className="size-4">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <Link className="text-white text-lg font-bold leading-tight tracking-[-0.015em]"  to="/">
+             HatTrickets
+            </Link>
+          </div>
+          <div className="flex items-center gap-9">
+            <Link className="text-white text-sm font-medium leading-normal" to="/">
+              Home
+            </Link>
+            <a className="text-white text-sm font-medium leading-normal" href="#">
+              Matches
+            </a>
+            <Link className="text-white text-sm font-medium leading-normal" to="/stadiums">
+              Stadiums
+            </Link>
+            <Link className="text-white text-sm font-medium leading-normal" to="/teams">
+              Teams
+            </Link>
+            <Link className="text-white text-sm font-medium leading-normal" to="/buy-ticket">
+              Buy Ticket
+            </Link>
+          </div>
+        </div>
+        <div className="flex flex-1 justify-end gap-8">
+          <label className="flex flex-col min-w-40 h-10 max-w-64">
+            <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
+              <div
+                className="text-[#93c893] flex border-none bg-[#244724] items-center justify-center pl-4 rounded-l-xl"
+                data-icon="MagnifyingGlass"
+                data-size="24px"
+                data-weight="regular"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+                </svg>
+              </div>
+              <input
+                placeholder="Search"
+                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#244724] focus:border-none h-full placeholder:text-[#93c893] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+              />
+            </div>
+          </label>
+          <div className="flex gap-2">
+            {loggedIn === null ? null : loggedIn ? (
+              <button onClick={handleLogout} className="flex min-w-[84px] items-center justify-center rounded-xl h-10 px-4 bg-red-600 text-white text-sm font-bold">
+                Logout
+              </button>  
+            ) : (
+              <>
+              <Link to="/login" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#19e619] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                <span className="truncate">Sign in</span>
+              </Link>
+              <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#244724] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                <span className="truncate">Register</span>
+              </button>
+              </>
+            )}
+           
+          </div>
+        </div>
+      </header>
+      {/* Render page content */}
+      <main>
+      <Outlet /> {/* This will load the current page */}
+      </main>
+    </div>
+  </div>
+  );
+};
+
+export default Layout;
+</file>
+
+<file path="src/services/matchService.ts">
+import axios from "axios";
+import { Match } from "../types/match";
+
+
+const API_URLGetUpComingMatches = "http://localhost:8080/api/auth/matches/fixtures";
+const API_URLGetMatchById = "http://localhost:8080/api/auth/matches/";
+
+export const getUpComingMatches = async (
+    leagueId: number,
+    season: number,
+    limit: number
+  ): Promise<Match[]> => {
+    try {
+      const response = await axios.get(API_URLGetUpComingMatches, {
+        params: { leagueId, season, limit },
+        withCredentials: true,
+      });
+      const transformedMatches: Match[] = response.data.map((match: any) => ({
+        id: match.id,
+        image: match.homeTeam.logo, 
+        title: `${match.homeTeam.name} vs ${match.awayTeam.name}`,
+        location: match.stadium.name,
+        awayTeam: match.awayTeam,
+        homeTeam: match.homeTeam,
+        stadium: match.stadium,
+        soldTickets: match.soldTickets,
+      }));
+      return transformedMatches;
+    } catch (error) { 
+      console.error("Error fetching matches:", error);
+      throw new Error("Failed to fetch matches");
+    }
+};
+
+export const getMatchById = async(
+    matchId: number
+  ): Promise<Match> => {
+    try {
+      const response = await axios.get(API_URLGetMatchById + matchId, {
+        withCredentials: true,
+      });
+      console.log(response)
+      const match = response.data; 
+      const transformedMatch: Match = {
+        id: match.id,
+        apiId: match.apiId,
+        image: match.homeTeam.logo,
+        title: `${match.homeTeam.name} vs ${match.awayTeam.name}`,
+        location: match.stadium.name,
+        awayTeam: match.awayTeam,
+        homeTeam: match.homeTeam,
+        stadium: match.stadium,
+        soldTickets: match.soldTickets,
+      };
+      return transformedMatch;
+    } catch (error) { 
+      console.error("Error fetching matches:", error);
+      throw new Error("Failed to fetch matches");
+    }
+  };
 </file>
 
 <file path="src/router.tsx">
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-⋮----
+
 import Home from "./pages/Home";
 import BuyTicket from './pages/buyTickets';
 import Layout from './components/layout';
 import StadiumPage  from './pages/Stadium';
 import TeamPage from './pages/Team';
-⋮----
-const AppRouter = () =>
+import MatchDetails from './pages/MatchDetails';
+import LoginPage from './pages/LoginPage';
+
+const AppRouter = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout/>}>
+          <Route index element={<Home />} />
+          <Route path="/buy-ticket" element={<BuyTicket />} />
+          <Route path="/stadiums" element={<StadiumPage />} />
+          <Route path="/teams" element={<TeamPage />} />
+          <Route path="/match/:matchId" element={<MatchDetails />} />
+          <Route path="/login" element={<LoginPage />} />
+        </Route>  
+      </Routes>
+    </Router>
+  );
+};
+
+export default AppRouter;
 </file>
 
 </files>

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Match } from "../types/match";
+import { getToken } from "./loginService";
 
 
 const API_URLGetUpComingMatches = "http://localhost:8080/api/auth/matches/fixtures";
@@ -13,8 +14,10 @@ export const getUpComingMatches = async (
     try {
       const response = await axios.get(API_URLGetUpComingMatches, {
         params: { leagueId, season, limit },
-        withCredentials: true,
-      });
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+              }
+        });
       const transformedMatches: Match[] = response.data.map((match: any) => ({
         id: match.id,
         image: match.homeTeam.logo, 
@@ -37,8 +40,10 @@ export const getMatchById = async(
   ): Promise<Match> => {
     try {
       const response = await axios.get(API_URLGetMatchById + matchId, {
-        withCredentials: true,
-      });
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+              }
+        });
       console.log(response)
       const match = response.data; 
       const transformedMatch: Match = {
