@@ -1,8 +1,9 @@
 import axios from "axios";
 import { Team } from "../types/team";
+import { getToken } from "./loginService";
 
 
-const API_URL = "http://localhost:8080/teams/search"; 
+const API_URL = "http://localhost:8080/api/auth/teams/search"; 
 
 export const searchTeams = async (
     searchQuery: string,
@@ -15,6 +16,9 @@ export const searchTeams = async (
                 searchQuery,
                 page,
                 size,
+            },
+            headers: {
+                Authorization: `Bearer ${getToken()}`
             }
           });
       const transformedTeams: Team[] = response.data.teams.map((team: any) => ({

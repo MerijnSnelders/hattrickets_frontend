@@ -1,8 +1,9 @@
 import axios from "axios";
 import { Stadium } from "../types/stadium";
+import { getToken } from "./loginService";
 
 
-const API_URL = "http://localhost:8080/stadiums/search"; 
+const API_URL = "http://localhost:8080/api/auth/stadiums/search"; 
 
 export const searchStadium = async (
     searchQuery: string,
@@ -15,6 +16,9 @@ export const searchStadium = async (
                 searchQuery,
                 page,
                 size,
+            },
+            headers: {
+              Authorization: `Bearer ${getToken()}`
             }
           });
       const transformedStadiums: Stadium[] = response.data.stadiums.map((stadium: any) => ({

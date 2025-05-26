@@ -1,10 +1,15 @@
 import axios from "axios";
 import { TicketPurchase } from "../types/ticket";
+import { getToken } from "./loginService";
 
 const API_URL = "http://localhost:8080/tickets/buy"; 
 export const buyTicket = async (ticket: TicketPurchase): Promise<String> => {
   try {
-    await axios.post(API_URL, ticket);
+    await axios.post(API_URL, ticket,{
+      headers: {
+      Authorization: `Bearer ${getToken()}`
+      }
+  });
     return "Ticket purchased successfully";
   } 
   catch (error) {

@@ -11,4 +11,5 @@ export interface Match {
   homeTeam: Team;
   stadium: Stadium;
   soldTickets: number;
+  date: Date;
 }

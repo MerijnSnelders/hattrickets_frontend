@@ -24,7 +24,7 @@ export const isLoggedIn = () => {
     if (!decoded)
          return null;
     else
-    return decoded.exp;
+    return decoded.userId;
 }
 
 export const logout = () => {

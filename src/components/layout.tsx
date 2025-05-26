@@ -64,9 +64,9 @@ const Layout = () => {
             <Link className="text-white text-sm font-medium leading-normal" to="/">
               Home
             </Link>
-            <a className="text-white text-sm font-medium leading-normal" href="#">
+            <Link className="text-white text-sm font-medium leading-normal" to="/matches">
               Matches
-            </a>
+            </Link>
             <Link className="text-white text-sm font-medium leading-normal" to="/stadiums">
               Stadiums
             </Link>
@@ -107,9 +107,9 @@ const Layout = () => {
               <Link to="/login" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#19e619] text-white text-sm font-bold leading-normal tracking-[0.015em]">
                 <span className="truncate">Sign in</span>
               </Link>
-              <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#244724] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+              <Link to="/register" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#244724] text-white text-sm font-bold leading-normal tracking-[0.015em]">
                 <span className="truncate">Register</span>
-              </button>
+              </Link>
               </>
             )}
            

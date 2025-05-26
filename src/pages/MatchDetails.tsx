@@ -83,33 +83,75 @@ export default function MatchDetails() {
     if (!match) return <div className="p-4">No data found</div>;
   
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4 text-white">Match Details</h1>
-        <div className="bg-[#008000] text-white rounded-2xl shadow p-6 flex items-center justify-between">
-          <div className="text-center">
-            <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-16 mx-auto" />
-            <p>{match.homeTeam.name}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-white">
-              {match.stadium.name}
-            </p>
-            <p className="text-sm text-white">
-              sold tickets: {match.soldTickets}
-            </p>
-            <button
-              onClick={handleBuyTicket}
-              className="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]"
-            >
-              <span className="truncate">Buy ticket</span>
-            </button>
-          </div>
-          <div className="text-center">
-            <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-16 mx-auto" />
-            <p>{match.awayTeam.name}</p>
-          </div>
+      <div className="p-6 text-white">
+      <h1 className="text-3xl font-bold mb-6">Match Details</h1>
+
+      {/* Stadion afbeelding */}
+      <div className="mb-6">
+        <img
+          src={match.stadium.image || "/placeholder-stadium.jpg"}
+          alt={match.stadium.name}
+          className="w-full h-64 object-contain rounded-xl shadow-lg "
+        />
+        <p className="mt-2 text-lg font-semibold text-center">{match.stadium.name}</p>
+      </div>
+
+      {/* Match info */}
+      <div className="bg-[#008000] rounded-2xl shadow p-6 flex items-center justify-between">
+        {/* Home team */}
+        <div className="text-center">
+          <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-20 mx-auto mb-2" />
+          <p className="text-xl font-semibold">{match.homeTeam.name}</p>
+        </div>
+
+        {/* Match metadata */}
+        <div className="text-center max-w-xs">
+          <p className="text-white text-lg mb-2 font-semibold">{match.homeTeam.name} vs {match.awayTeam.name}</p>
+          <p className="text-sm">Stadium: {match.stadium.name}</p>
+          <p className="text-sm">Date: {new Date(match.date).toLocaleDateString()}</p>
+          <p className="text-sm mb-4">Sold tickets: {match.soldTickets}</p>
+          <button
+            onClick={handleBuyTicket}
+            className="w-full px-4 py-2 bg-[#19e619] text-[#112211] text-sm font-bold rounded-xl"
+          >
+            Buy Ticket – €{price}
+          </button>
+        </div>
+
+        {/* Away team */}
+        <div className="text-center">
+          <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-20 mx-auto mb-2" />
+          <p className="text-xl font-semibold">{match.awayTeam.name}</p>
         </div>
       </div>
+    </div>
+      // <div className="p-6">
+      //   <h1 className="text-2xl font-bold mb-4 text-white">Match Details</h1>
+      //   <div className="bg-[#008000] text-white rounded-2xl shadow p-6 flex items-center justify-between">
+      //     <div className="text-center">
+      //       <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-16 mx-auto" />
+      //       <p>{match.homeTeam.name}</p>
+      //     </div>
+      //     <div className="text-center">
+      //       <p className="text-sm text-white">
+      //         {match.stadium.name}
+      //       </p>
+      //       <p className="text-sm text-white">
+      //         sold tickets: {match.soldTickets}
+      //       </p>
+      //       <button
+      //         onClick={handleBuyTicket}
+      //         className="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]"
+      //       >
+      //         <span className="truncate">Buy ticket</span>
+      //       </button>
+      //     </div>
+      //     <div className="text-center">
+      //       <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-16 mx-auto" />
+      //       <p>{match.awayTeam.name}</p>
+      //     </div>
+      //   </div>
+      // </div>
     );
   }
   

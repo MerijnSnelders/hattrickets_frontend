@@ -12,7 +12,8 @@ export interface AuthRequest {
     token: string;
   }
 export interface DecodedToken {
-   sub: string;
+  userId: number
+  sub: string;
   role: string;
   exp: number;
 }

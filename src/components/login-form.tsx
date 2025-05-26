@@ -14,6 +14,7 @@ import { useState } from "react"
 import { googleLogin, login, saveToken } from "@/services/loginService"
 import {AuthRequest} from "@/types/auth"
 import { useNavigate } from 'react-router-dom';
+import { Link } from "react-router-dom"
 
 
 export function LoginForm({
@@ -122,9 +123,9 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
-                  Sign up
-                </a>
+                <Link to={"/register"} className="underline underline-offset-4">
+                  register
+                </Link>
               </div>
             </div>
           </form>
