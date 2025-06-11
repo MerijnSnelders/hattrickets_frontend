@@ -15,7 +15,7 @@
     cursor: pointer;
   }
   
-  button:hover {
+  button:hover:not([disabled]) {
     background-color: darkgreen;
   }
   

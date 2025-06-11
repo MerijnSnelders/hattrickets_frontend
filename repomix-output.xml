@@ -51,11 +51,13 @@ README.md
 src/App.css
 src/App.tsx
 src/assets/react.svg
+src/components/detailedMatchCard.tsx
 src/components/featuredMatches.tsx
 src/components/layout.tsx
 src/components/login-form.tsx
 src/components/LoginComponent.tsx
 src/components/matchCard.tsx
+src/components/register-form.tsx
 src/components/SearchPage.tsx
 src/components/stadiumCard.tsx
 src/components/teamCard.tsx
@@ -63,17 +65,21 @@ src/components/ui/button.tsx
 src/components/ui/card.tsx
 src/components/ui/input.tsx
 src/components/ui/label.tsx
+src/hooks/useSeatWebSocket.tsx
 src/lib/utils.ts
 src/main.tsx
 src/pages/buyTickets.tsx
 src/pages/Home.tsx
 src/pages/LoginPage.tsx
 src/pages/MatchDetails.tsx
+src/pages/MatchPage.tsx
+src/pages/RegisterPage.tsx
 src/pages/Stadium.tsx
 src/pages/Team.tsx
 src/router.tsx
 src/services/loginService.ts
 src/services/matchService.ts
+src/services/seatService.ts
 src/services/stadiumService.ts
 src/services/teamService.ts
 src/services/ticketService.ts
@@ -82,6 +88,7 @@ src/styles/global.css
 src/styles/home.css
 src/types/auth.ts
 src/types/match.ts
+src/types/seat.ts
 src/types/stadium.ts
 src/types/team.ts
 src/types/ticket.ts
@@ -95,6 +102,120 @@ vite.config.ts
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/hooks/useSeatWebSocket.tsx">
+import { useEffect, useRef } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
+interface SeatSelectionMessage {
+  matchId: number;
+  row: string;
+  seatIndex: number;
+  status: "selected" | "available";
+  userId: number;
+}
+
+
+export const useSeatWebSocket = (matchId: number, onSeatUpdate: (message: SeatSelectionMessage) => void, currentlySelectedKey: string | null,
+  userId: number | undefined) => {
+  const clientRef = useRef<Client | null>(null);
+    const sendSeatSelection = (
+    row: string, 
+    seatIndex: number, 
+    status: "selected" | "available", 
+    userId: number
+  ) => {
+    clientRef.current?.publish({
+      destination: "/app/select",
+      body: JSON.stringify({ 
+        matchId, 
+        row, 
+        seatIndex, 
+        status, 
+        userId 
+      }),
+    });
+  };
+
+
+  useEffect(() => {
+    const socket = new SockJS("http://localhost:8080/ws");
+    const client = new Client({
+      webSocketFactory: () => socket,
+      onConnect: () => {
+      //  console.log("✅ Verbonden met WebSocket");
+        client.subscribe(`/topic/seats/${matchId}`, (msg) => {
+          const body = JSON.parse(msg.body);
+      //    console.log("📩 Ontvangen WebSocket bericht:", body);
+          onSeatUpdate(body);
+        });
+      },
+      onStompError: (frame) => {
+        console.error("❌ STOMP-fout:", frame);
+      },
+      debug: (str) => {
+        console.debug("🐛 STOMP debug:", str);
+      },
+    });
+
+    client.activate();
+    clientRef.current = client;
+
+    return () => {
+      if (clientRef.current?.active) {
+      clientRef.current.deactivate();
+    }
+    
+    if (currentlySelectedKey) {
+      const [row, seatIndex] = currentlySelectedKey.split('-');
+      sendSeatSelection(row, parseInt(seatIndex), "available", userId ?? 0);
+    }
+    };
+  }, [matchId]);
+
+  return {
+    sendSeatSelection: (row: string, seatIndex: number, status: string, userId: number) => {
+      clientRef.current?.publish({
+        destination: "/app/select",
+        body: JSON.stringify({ matchId, row, seatIndex, status, userId }),
+      });
+    },
+  };
+};
+</file>
+
+<file path="src/services/seatService.ts">
+import axios from "axios";
+import { getToken } from "./loginService";
+
+const API_URL = "http://localhost:8080/api/auth/seats/"; 
+
+export const getSeatsForMatch = async (matchId: number, page = 0, size = 200, row: string | null = null) => {
+    const params = new URLSearchParams({
+    page: page.toString(),
+    size: size.toString(),
+    });
+
+    if (row) params.append("row", row);
+
+    const response = await axios.get(API_URL+`${matchId}?${params.toString()}`,{
+        headers: {
+            Authorization: `Bearer ${getToken()}`
+            }
+    });
+    return response.data;
+};
+</file>
+
+<file path="src/types/seat.ts">
+export interface Seat {
+    id: number;
+    row: string;     
+    seatIndex: number; 
+    isReserved: boolean;
+};
+</file>
 
 <file path=".gitignore">
 # Logs
@@ -195,6 +316,50 @@ module.exports = {
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
 </file>
 
+<file path="src/components/detailedMatchCard.tsx">
+import { Match } from "@/types/match";
+import { Link } from "react-router-dom";
+
+interface MatchCardProps {
+  match: Match;
+}
+
+const DetailedMatchCard: React.FC<MatchCardProps> = ({match}) => {
+
+    return(
+        <Link to={`/match/${match.id}`}>
+        <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4 text-white">Match Details</h1>
+        <div className="bg-[#008000] text-white rounded-2xl shadow p-6 flex items-center justify-between">
+          <div className="text-center">
+            <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-16 mx-auto" />
+            <p>{match.homeTeam.name}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-white">
+              {match.stadium.name}
+            </p>
+            <p className="text-sm text-white">
+              sold tickets: {match.soldTickets}
+            </p>
+            {/* <button
+              onClick={handleBuyTicket}
+              className="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]"
+            >
+              <span className="truncate">Buy ticket</span>
+            </button> */}
+          </div>
+          <div className="text-center">
+            <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-16 mx-auto" />
+            <p>{match.awayTeam.name}</p>
+          </div>
+        </div>
+      </div>
+      </Link>
+)};
+export default DetailedMatchCard;
+</file>
+
 <file path="src/components/LoginComponent.tsx">
 // import { useState } from "react";
 // import { GoogleLogin } from "@react-oauth/google";
@@ -264,6 +429,141 @@ module.exports = {
 // };
 
 // export default LoginPage;
+</file>
+
+<file path="src/components/register-form.tsx">
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { GoogleLogin } from "@react-oauth/google"
+import { useState } from "react"
+import { googleLogin, login, saveToken, signup } from "@/services/loginService"
+import {AuthRequest} from "@/types/auth"
+import { useNavigate } from 'react-router-dom';
+import { Link } from "react-router-dom"
+
+
+export function RegisterForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const GoogleLoginImpl = async(token: string | undefined) => {
+    if (!token) {
+      console.error("Geen token ontvangen van Google");
+      return;
+    }
+
+    try {
+      const response = await googleLogin(token); 
+      console.log("Backend response:", response);
+      saveToken(response.token);
+
+      navigate('/');
+      window.location.reload();
+    } catch (err) {
+      console.error("Fout bij backend login", err);
+    }
+  };
+
+  const Register = async () =>{
+    try{
+    const request: AuthRequest = {
+      email: email,
+      password: password
+    }
+      const response = await signup(request)
+      saveToken(response.token);
+      navigate('/');
+      window.location.reload();
+    }
+    catch (err: any) {
+      console.error("Login failed: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Welcome </CardTitle>
+          <CardDescription>
+            register with Google
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="grid gap-6">
+              <div className="flex flex-col gap-4">   
+              <GoogleLogin theme="outline" size="large" text="signin_with"
+                onSuccess={async (credentialResponse) => {
+                    console.log("Login Success:", credentialResponse);
+                    const token = credentialResponse.credential;
+                    GoogleLoginImpl(token)
+                  }
+                }
+                onError={() => {
+                  console.error("Login Failed");
+                  }
+                }
+                useOneTap={false} 
+                /> 
+              </div>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground my-4">
+                <div className="flex-grow border-t border-border" />
+                <span className="px-1 bg-background">Or register with</span>
+                <div className="flex-grow border-t border-border" />
+              </div>
+              <div className="grid gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Password</Label>
+                  </div>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
+                </div>
+                <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); Register()}}>
+                  Register
+                </Button>
+              </div>
+              <div className="text-center text-sm">
+                Already have an account?{" "}
+                <Link to={'/login'} className="underline underline-offset-4">
+                  Sign up
+                </Link>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
+  )
+}
 </file>
 
 <file path="src/components/stadiumCard.tsx">
@@ -543,6 +843,149 @@ const LoginPage = () =>{
 export default LoginPage;
 </file>
 
+<file path="src/pages/MatchPage.tsx">
+import { useEffect, useState } from "react";
+import { filterMatches } from "@/services/matchService";
+import DetailedMatchCard from "@/components/detailedMatchCard";
+import { Match } from "@/types/match";
+
+
+export default function MatchPage() {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [teamFilter, setTeamFilter] = useState("");
+  const [stadiumFilter, setStadiumFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+
+  const pageSize = 5;
+
+  const fetchMatches = async () => {
+    try {
+      const response = await filterMatches(page, pageSize, teamFilter, stadiumFilter, dateFilter)
+      setMatches(response.content);
+      setTotalPages(response.totalPages);
+    } catch (err) {
+      console.error("Failed to load matches", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMatches();
+  }, [page]);
+
+  return (
+    <div className="p-6">
+      <div className="flex gap-4 mb-6">
+        <label className="flex flex-col min-w-40 h-10 max-w-64">
+          <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
+            <div
+              className="text-[#93c893] flex border-none bg-[#244724] items-center justify-center pl-4 rounded-l-xl"
+              data-icon="MagnifyingGlass"
+              data-size="24px"
+              data-weight="regular"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Team name"
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#244724] focus:border-none h-full placeholder:text-[#93c893] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+            />
+          </div>
+        </label>
+        <label className="flex flex-col min-w-40 h-10 max-w-64">
+          <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
+            <div
+              className="text-[#93c893] flex border-none bg-[#244724] items-center justify-center pl-4 rounded-l-xl"
+              data-icon="MagnifyingGlass"
+              data-size="24px"
+              data-weight="regular"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+              </svg>
+            </div>
+            <input
+          type="text"
+          placeholder="Stadium name"
+          value={stadiumFilter}
+          onChange={(e) => setStadiumFilter(e.target.value)}
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#244724] focus:border-none h-full placeholder:text-[#93c893] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+            />
+          </div>
+        </label>
+        <label className="flex flex-col min-w-40 h-10 max-w-64">
+          <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="form-input w-full flex-1 resize-none overflow-hidden rounded-xl border-0 bg-[#244724] px-4 pl-2 text-base text-white placeholder:text-[#93c893] focus:outline-none focus:ring-0"
+            />
+          </div>
+        </label>
+        <button
+          onClick={() => {
+            setPage(0); // Reset naar eerste pagina bij nieuwe filter
+            fetchMatches();
+          }}
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]"
+        >
+          Apply
+        </button>
+      </div>
+      <h1 className="text-3xl font-bold mb-6 text-white">All Matches</h1>
+
+      <div className="flex flex-col gap-6">
+        {matches.map((match) => (
+          <DetailedMatchCard match={match}/>
+        ))}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-6 gap-4">
+        <button
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em] disabled:opacity-50"
+          onClick={() => setPage((p) => p - 1)}
+          disabled={page === 0}
+        >
+          Previous
+        </button>
+        <span className="text-white">Page {page + 1} of {totalPages}</span>
+        <button
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em] disabled:opacity-50"
+          onClick={() => setPage((p) => p + 1)}
+          disabled={page + 1 >= totalPages}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/RegisterPage.tsx">
+import { RegisterForm } from "@/components/register-form";
+
+
+const RegisterPage = () =>{
+    return(
+        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+        <div className="flex w-full max-w-sm flex-col gap-6">
+          <RegisterForm />
+        </div>
+      </div>
+    );
+}
+export default RegisterPage;
+</file>
+
 <file path="src/pages/Team.tsx">
 import { searchTeams } from "../services/teamService";
 import { Team } from "../types/team";
@@ -561,50 +1004,6 @@ const TeamPage = () => {
 };
 
 export default TeamPage;
-</file>
-
-<file path="src/services/loginService.ts">
-import axios from "axios";
-import { AuthRequest, AuthResponse, SignupRequest } from "@/types/auth";
-const API_URL = "http://localhost:8080/api/auth/users"
-
-export const login = async (data: AuthRequest): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_URL}/login`, data);
-  return response.data;
-};
-
-export const signup = async (data: SignupRequest): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_URL}/signup`, data,
-    { withCredentials: true,});
-  return response.data;
-};
-
-export const googleLogin = async (googleToken: string): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_URL}/googleLogin`, 
-    { token: googleToken},{  withCredentials: true, });
-  return response.data;
-};
-
-export const isLoggedIn = async (): Promise<number | null> => {
-  try{
-    const response = await axios.get(`${API_URL}/isLoggedIn`,
-      {withCredentials: true,});
-      return response.data;
-  }
-  catch{
-    return null
-  }    
-}
-
-export const logout = async () : Promise<void> => {
-  await axios.post(`${API_URL}/logout`, {} ,
-    {withCredentials: true}
-  )
-}
-
-export const saveToken = (token: string) => {
-  localStorage.setItem("token", token);
-};
 </file>
 
 <file path="src/styles/global.css">
@@ -661,27 +1060,13 @@ export const saveToken = (token: string) => {
   }
 </file>
 
-<file path="src/types/auth.ts">
-export interface AuthRequest {
-    email: string;
-    password: string;
-  }
-  
-  export interface SignupRequest {
-    email: string;
-    password: string;
-  }
-  
-  export interface AuthResponse {
-    token: string;
-  }
-</file>
-
 <file path="src/types/ticket.ts">
 export interface TicketPurchase {
     userId: number;
     matchId: number;
     price: number;
+    row: string;
+    seatIndex: number;
   }
 </file>
 
@@ -731,6 +1116,12 @@ module.exports = {
 <!doctype html>
 <html lang="en">
   <head>
+      <script>
+      // Add this script before any other scripts
+      if (typeof global === 'undefined') {
+        window.global = window;
+      }
+    </script>
     <link href="/src/index.css" rel="stylesheet">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1006,145 +1397,6 @@ const FeaturedMatches: React.FC<FeaturedMatchesProps> = ({ matches }) => {
 export default FeaturedMatches;
 </file>
 
-<file path="src/components/login-form.tsx">
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { GoogleLogin } from "@react-oauth/google"
-import { useState } from "react"
-import { googleLogin, login, saveToken } from "@/services/loginService"
-import {AuthRequest} from "@/types/auth"
-import { useNavigate } from 'react-router-dom';
-
-
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-
-  const GoogleLoginImpl = async(token: string | undefined) => {
-    if (!token) {
-      console.error("Geen token ontvangen van Google");
-      return;
-    }
-
-    try {
-      const response = await googleLogin(token); 
-      console.log("Backend response:", response);
-      navigate('/');
-      window.location.reload();
-    } catch (err) {
-      console.error("Fout bij backend login", err);
-    }
-  };
-
-  const Login = async () =>{
-    try{
-    const request: AuthRequest = {
-      email: email,
-      password: password
-    }
-      const response = await login(request)
-      alert(response);
-      saveToken(response.token);
-      navigate('/');
-      window.location.reload();
-    }
-    catch (err: any) {
-      console.error("Login failed: " + (err.response?.data?.message || err.message));
-    }
-  };
-
-  return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>
-            Login with Google
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form>
-            <div className="grid gap-6">
-              <div className="flex flex-col gap-4">   
-                <GoogleLogin theme="outline" size="large" text="signin_with"
-                onSuccess={async (credentialResponse) => {
-                    console.log("Login Success:", credentialResponse);
-                    const token = credentialResponse.credential;
-                    GoogleLoginImpl(token)
-                  }
-                }
-                onError={() => {
-                  console.error("Login Failed");
-                  }
-                }
-                useOneTap={false} // optioneel: zet op true voor automatische popup
-                />           
-              </div>
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground my-4">
-                <div className="flex-grow border-t border-border" />
-                <span className="px-1 bg-background">Or continue with</span>
-                <div className="flex-grow border-t border-border" />
-              </div>
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-3">
-                  <div className="flex items-center">
-                    <Label htmlFor="password">Password</Label>
-                    <a
-                      href="#"
-                      className="ml-auto text-sm underline-offset-4 hover:underline"
-                    >
-                      Forgot your password?
-                    </a>
-                  </div>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
-                </div>
-                <Button type="submit" className="w-full" onClick={() => Login()}>
-                  Login
-                </Button>
-              </div>
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
-                  Sign up
-                </a>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
-    </div>
-  )
-}
-</file>
-
 <file path="src/components/matchCard.tsx">
 import { Link } from "react-router-dom";
 import { Match } from "../types/match";
@@ -1313,57 +1565,6 @@ const StadiumPage = () => {
 export default StadiumPage;
 </file>
 
-<file path="src/services/stadiumService.ts">
-import axios from "axios";
-import { Stadium } from "../types/stadium";
-
-
-const API_URL = "http://localhost:8080/stadiums/search"; 
-
-export const searchStadium = async (
-    searchQuery: string,
-    page: number,
-    size: number
-  ): Promise<Stadium[]> => {
-    try {
-        const response = await axios.get(API_URL, {
-            params:{
-                searchQuery,
-                page,
-                size,
-            }
-          });
-      const transformedStadiums: Stadium[] = response.data.stadiums.map((stadium: any) => ({
-        id: stadium.id,
-        apiId: stadium.apiId,
-        name: stadium.name,
-        capacity: stadium.capacity,
-        image: stadium.image, 
-      }));
-      return transformedStadiums;
-    } catch (error) {
-      console.error("Error fetching stadiums:", error);
-      return [];
-    }
-};
-</file>
-
-<file path="src/services/ticketService.ts">
-import axios from "axios";
-import { TicketPurchase } from "../types/ticket";
-
-const API_URL = "http://localhost:8080/tickets/buy"; 
-export const buyTicket = async (ticket: TicketPurchase): Promise<String> => {
-  try {
-    await axios.post(API_URL, ticket);
-    return "Ticket purchased successfully";
-  } 
-  catch (error) {
-    throw new Error((error as Error).message);
-  }
-};
-</file>
-
 <file path="src/styles/buyTickets.css">
 @import "tailwindcss";
 
@@ -1382,7 +1583,7 @@ export const buyTicket = async (ticket: TicketPurchase): Promise<String> => {
     cursor: pointer;
   }
   
-  button:hover {
+  button:hover:not([disabled]) {
     background-color: darkgreen;
   }
 </file>
@@ -1463,58 +1664,12 @@ export default defineConfig({
 });
 </file>
 
-<file path="package.json">
-{
-  "name": "hattrickets_frontend",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@radix-ui/react-label": "^2.1.4",
-    "@radix-ui/react-slot": "^1.2.0",
-    "@react-oauth/google": "^0.12.1",
-    "@tailwindcss/postcss": "^4.0.13",
-    "@tailwindcss/vite": "^4.0.13",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "axios": "^1.9.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.503.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.3.0",
-    "sweetalert2": "^11.17.2",
-    "tailwind-merge": "^3.2.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.21.0",
-    "@types/node": "^22.15.3",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@types/react-router-dom": "^5.3.3",
-    "@vitejs/plugin-react-swc": "^3.8.0",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^9.21.0",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^15.15.0",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.13",
-    "tw-animate-css": "^1.2.8",
-    "typescript": "~5.7.2",
-    "typescript-eslint": "^8.24.1",
-    "vite": "^6.2.0"
-  }
-}
-</file>
-
 <file path="src/main.tsx">
+if (typeof global === 'undefined') {
+  // @ts-ignore
+  window.global = window;
+}
+
 import { createRoot } from 'react-dom/client'
 import "./styles/global.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -1626,12 +1781,381 @@ const Home = () =>{
 export default Home;
 </file>
 
+<file path="src/services/loginService.ts">
+import axios from "axios";
+import { AuthRequest, AuthResponse, DecodedToken, SignupRequest } from "@/types/auth";
+import { jwtDecode } from "jwt-decode";
+const API_URL = "http://localhost:8080/api/auth/users"
+
+export const login = async (data: AuthRequest): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/login`, data);
+  return response.data;
+};
+
+export const signup = async (data: SignupRequest): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/signup`, data);
+  return response.data;
+};
+
+export const googleLogin = async (googleToken: string): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/googleLogin`, 
+    { token: googleToken});
+  return response.data;
+};
+
+export const isLoggedIn = () => {
+    const decoded = decodeToken();
+    if (!decoded)
+         return null;
+    else
+    return decoded.userId;
+}
+
+export const logout = () => {
+  localStorage.removeItem("token");
+};
+
+export const saveToken = (token: string) => {
+  localStorage.setItem("token", token);
+};
+
+export const getToken = () => localStorage.getItem("token");
+
+export const decodeToken = (): DecodedToken | null => {
+    const token = getToken();
+    if (!token) return null;
+    try {
+      return jwtDecode<DecodedToken>(token);
+    } catch {
+      return null;
+    }
+};
+
+export const getUserRole = (): string | null => {
+    const decoded = decodeToken();
+    return decoded?.role || null;
+};
+</file>
+
+<file path="src/services/stadiumService.ts">
+import axios from "axios";
+import { Stadium } from "../types/stadium";
+import { getToken } from "./loginService";
+
+
+const API_URL = "http://localhost:8080/api/auth/stadiums/search"; 
+
+export const searchStadium = async (
+    searchQuery: string,
+    page: number,
+    size: number
+  ): Promise<Stadium[]> => {
+    try {
+        const response = await axios.get(API_URL, {
+            params:{
+                searchQuery,
+                page,
+                size,
+            },
+            headers: {
+              Authorization: `Bearer ${getToken()}`
+            }
+          });
+      const transformedStadiums: Stadium[] = response.data.stadiums.map((stadium: any) => ({
+        id: stadium.id,
+        apiId: stadium.apiId,
+        name: stadium.name,
+        capacity: stadium.capacity,
+        image: stadium.image, 
+      }));
+      return transformedStadiums;
+    } catch (error) {
+      console.error("Error fetching stadiums:", error);
+      return [];
+    }
+};
+</file>
+
+<file path="src/services/ticketService.ts">
+import axios from "axios";
+import { TicketPurchase } from "../types/ticket";
+import { getToken } from "./loginService";
+
+const API_URL = "http://localhost:8080/tickets/buy"; 
+export const buyTicket = async (ticket: TicketPurchase): Promise<String> => {
+  try {
+    await axios.post(API_URL, ticket,{
+      headers: {
+      Authorization: `Bearer ${getToken()}`
+      }
+  });
+    return "Ticket purchased successfully";
+  } 
+  catch (error) {
+    throw new Error((error as Error).message);
+  }
+};
+</file>
+
+<file path="src/types/auth.ts">
+export interface AuthRequest {
+    email: string;
+    password: string;
+  }
+  
+  export interface SignupRequest {
+    email: string;
+    password: string;
+  }
+  
+  export interface AuthResponse {
+    token: string;
+  }
+export interface DecodedToken {
+  userId: number
+  sub: string;
+  role: string;
+  exp: number;
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "jsx": "react-jsx", 
+    "strict": true,
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "hattrickets_frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-ui/react-label": "^2.1.4",
+    "@radix-ui/react-slot": "^1.2.0",
+    "@react-oauth/google": "^0.12.2",
+    "@stomp/stompjs": "^7.1.1",
+    "@tailwindcss/postcss": "^4.0.13",
+    "@tailwindcss/vite": "^4.0.13",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "axios": "^1.9.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.503.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.3.0",
+    "sockjs-client": "^1.6.1",
+    "sweetalert2": "^11.17.2",
+    "tailwind-merge": "^3.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/sockjs-client": "^1.5.4",
+    "@vitejs/plugin-react-swc": "^3.8.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^15.15.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.0.13",
+    "tw-animate-css": "^1.2.8",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.24.1",
+    "vite": "^6.2.0"
+  }
+}
+</file>
+
+<file path="src/components/login-form.tsx">
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { GoogleLogin } from "@react-oauth/google"
+import { useState } from "react"
+import { googleLogin, login, saveToken } from "@/services/loginService"
+import {AuthRequest} from "@/types/auth"
+import { useNavigate } from 'react-router-dom';
+import { Link } from "react-router-dom"
+
+
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const GoogleLoginImpl = async(token: string | undefined) => {
+    if (!token) {
+      console.error("Geen token ontvangen van Google");
+      return;
+    }
+
+    try {
+      const response = await googleLogin(token); 
+      console.log("Backend response:", response);
+      saveToken(response.token);
+
+      navigate('/');
+      window.location.reload();
+    } catch (err) {
+      console.error("Fout bij backend login", err);
+    }
+  };
+
+  const Login = async () =>{
+    try{
+    const request: AuthRequest = {
+      email: email,
+      password: password
+    }
+      alert("here");
+      const response = await login(request)
+      alert(response);
+      saveToken(response.token);
+      navigate('/');
+      window.location.reload();
+    }
+    catch (err: any) {
+      console.error("Login failed: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardDescription>
+            Login with Google
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="grid gap-6">
+              <div className="flex flex-col gap-4">   
+              <GoogleLogin theme="outline" size="large" text="signin_with"
+                onSuccess={async (credentialResponse) => {
+                    console.log("Login Success:", credentialResponse);
+                    const token = credentialResponse.credential;
+                    GoogleLoginImpl(token)
+                  }
+                }
+                onError={() => {
+                  console.error("Login Failed");
+                  }
+                }
+                useOneTap={false} // optioneel: zet op true voor automatische popup
+                /> 
+              </div>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground my-4">
+                <div className="flex-grow border-t border-border" />
+                <span className="px-1 bg-background">Or continue with</span>
+                <div className="flex-grow border-t border-border" />
+              </div>
+              <div className="grid gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Password</Label>
+                    <a
+                      href="#"
+                      className="ml-auto text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
+                </div>
+                <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); Login()}}>
+                  Login
+                </Button>
+              </div>
+              <div className="text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link to={"/register"} className="underline underline-offset-4">
+                  register
+                </Link>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
+  )
+}
+{/* <GoogleLogin theme="outline" size="large" text="signin_with"
+                onSuccess={async (credentialResponse) => {
+                    console.log("Login Success:", credentialResponse);
+                    const token = credentialResponse.credential;
+                    GoogleLoginImpl(token)
+                  }
+                }
+                onError={() => {
+                  console.error("Login Failed");
+                  }
+                }
+                useOneTap={false} // optioneel: zet op true voor automatische popup
+                />    */}
+</file>
+
 <file path="src/services/teamService.ts">
 import axios from "axios";
 import { Team } from "../types/team";
+import { getToken } from "./loginService";
 
 
-const API_URL = "http://localhost:8080/teams/search"; 
+const API_URL = "http://localhost:8080/api/auth/teams/search"; 
 
 export const searchTeams = async (
     searchQuery: string,
@@ -1644,6 +2168,9 @@ export const searchTeams = async (
                 searchQuery,
                 page,
                 size,
+            },
+            headers: {
+                Authorization: `Bearer ${getToken()}`
             }
           });
       const transformedTeams: Team[] = response.data.teams.map((team: any) => ({
@@ -1674,25 +2201,7 @@ export interface Match {
   homeTeam: Team;
   stadium: Stadium;
   soldTickets: number;
-}
-</file>
-
-<file path="tsconfig.json">
-{
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
-  "compilerOptions": {
-    "jsx": "react-jsx", 
-    "strict": true,
-    "esModuleInterop": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
+  date: Date;
 }
 </file>
 
@@ -1705,20 +2214,43 @@ import { buyTicket } from "../services/ticketService";
 import Swal from 'sweetalert2';
 import { isLoggedIn } from "@/services/loginService";
 import { useNavigate } from 'react-router-dom';
+import { getSeatsForMatch } from "@/services/seatService";
+import { Seat } from "@/types/seat";
+import { useSeatWebSocket } from "@/hooks/useSeatWebSocket";
+
 
 
 
 export default function MatchDetails() {
     const { matchId } = useParams<{ matchId: string }>();
+    const parsedMatchId = matchId ? parseInt(matchId, 10) : undefined;
     const [match, setMatch] = useState<Match>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [userId, setUserId] = useState<number>();
+    const [seats, setSeats] = useState<Seat[]>([]);
+    const [selectedSeatIndex, setSelectedSeatIndex] = useState<number | null>(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [selectedRow, setSelectedRow] = useState<string | null>(null);
+    const [totalPages, setTotalPages] = useState(1);
+    const [liveSeatStatus, setLiveSeatStatus] = useState<Record<string, { status: string; userId: number }>>({});
+    const [currentlySelectedKey, setCurrentlySelectedKey] = useState<string | null>(null);
+    const [initialSyncDone, setInitialSyncDone] = useState(false);
+
     const navigate = useNavigate();
+    
   
     // 👇 Deze horen buiten de handler
    // const userId = 1;
     const price = 12.5;
+
+    const { sendSeatSelection } = useSeatWebSocket(parsedMatchId ?? 0, (message) => {
+      const key = `${message.row}-${message.seatIndex}`;
+      setLiveSeatStatus((prev) => ({ ...prev, [key]: { status: message.status, userId: message.userId }}));
+    },
+    currentlySelectedKey,
+    userId
+  );
   
     useEffect(() => {
       async function fetchMatch() {
@@ -1730,6 +2262,7 @@ export default function MatchDetails() {
             }
             else{
               setUserId(userIdData)
+              //console.log(userId)
             }
           }
           catch{
@@ -1740,6 +2273,67 @@ export default function MatchDetails() {
           const id = parseInt(matchId, 10);
           const data = await getMatchById(id);
           setMatch(data);
+          try{
+            const seatsData = await getSeatsForMatch(id, currentPage, 200, selectedRow);
+            console.log("SEATS DATA:", seatsData);
+            console.log("Typeof seatsData:", typeof seatsData);
+             const updatedLiveStatus: Record<string, { status: string; userId: number }> = {};
+          //  type SeatWrapper = { seat: Seat };
+
+          const mappedSeats = seatsData.content.map((wrapper: any) => {
+            const seat = wrapper.seat;
+            const key = `${seat.row}-${seat.seatIndex}`;
+          
+
+    
+            if (wrapper.selected) {
+              updatedLiveStatus[key] = {
+                status: "selected",
+                userId: wrapper.selectingUserId
+              };
+              
+            } 
+            else if (seat.reserved) {
+              updatedLiveStatus[key] = {
+                status: "reserved",
+                userId: -1
+              };
+            }
+            if (wrapper.selectingUserId === userId) {
+              setCurrentlySelectedKey(key);
+              setSelectedRow(seat.row);
+              setSelectedSeatIndex(seat.seatIndex);
+            }
+
+            return {
+              id: seat.id,
+              row: seat.row,
+              seatIndex: seat.seatIndex,
+              isReserved: seat.reserved,
+            };
+          });
+          setSeats(mappedSeats)
+          setLiveSeatStatus(prev => ({ ...prev, ...updatedLiveStatus }));
+          setInitialSyncDone(true);
+
+            // setSeats(
+            //   seatsData.content.map((wrapper: any) => ({
+            //     id: wrapper.seat.id,
+            //     row: wrapper.seat.row,
+            //     seatIndex: wrapper.seat.seatIndex,
+            //     isReserved: wrapper.seat.reserved, // 👈 hier map je het
+            //   }))
+            // );
+            setTotalPages(seatsData.totalPages);
+            //console.log(seatsData.content);
+            //console.log(seatsData.content[0]);
+
+            //console.log(seats[0].isReserved);
+            // console.log(seats[0].id); 
+          }
+          catch(error){
+            setError("failed to set seats: " + error)
+          }
         } catch (error) {
           setError("Failed to load match data");
         } finally {
@@ -1748,15 +2342,16 @@ export default function MatchDetails() {
       }
   
       if (matchId) fetchMatch();
-    }, [matchId]);
+    }, [matchId, currentPage, selectedRow]);
   
     const handleBuyTicket = async () => {
       try {
         if (!matchId) throw new Error("No match ID");
-        const parsedMatchId = parseInt(matchId, 10);
         if (!userId) throw new Error("No user ID");
-        alert(userId);
-        const response = await buyTicket({userId: userId, matchId: parsedMatchId, price});
+        // alert(userId);
+        if(!selectedRow) throw new Error("no selected row")
+        if(!selectedSeatIndex) throw new Error("no selected seat idex")
+        const response = await buyTicket({userId: userId, matchId: parsedMatchId ?? 0, price: price, row: selectedRow, seatIndex: selectedSeatIndex});
         Swal.fire({
             icon: 'success',
             title: 'Ticket purchased!',
@@ -1782,33 +2377,151 @@ export default function MatchDetails() {
     if (!match) return <div className="p-4">No data found</div>;
   
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4 text-white">Match Details</h1>
-        <div className="bg-[#008000] text-white rounded-2xl shadow p-6 flex items-center justify-between">
-          <div className="text-center">
-            <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-16 mx-auto" />
-            <p>{match.homeTeam.name}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-white">
-              {match.stadium.name}
-            </p>
-            <p className="text-sm text-white">
-              sold tickets: {match.soldTickets}
-            </p>
-            <button
-              onClick={handleBuyTicket}
-              className="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]"
-            >
-              <span className="truncate">Buy ticket</span>
-            </button>
-          </div>
-          <div className="text-center">
-            <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-16 mx-auto" />
-            <p>{match.awayTeam.name}</p>
-          </div>
+      <div className="p-6 text-white">
+      <h1 className="text-3xl font-bold mb-6">Match Details</h1>
+
+      {/* Stadion afbeelding */}
+      <div className="mb-6">
+        <img
+          src={match.stadium.image || "/placeholder-stadium.jpg"}
+          alt={match.stadium.name}
+          className="w-full h-64 object-contain rounded-xl shadow-lg "
+        />
+        <p className="mt-2 text-lg font-semibold text-center">{match.stadium.name}</p>
+      </div>
+
+      {/* Match info */}
+      <div className="bg-[#008000] rounded-2xl shadow p-6 flex items-center justify-between">
+        {/* Home team */}
+        <div className="text-center">
+          <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-20 mx-auto mb-2" />
+          <p className="text-xl font-semibold">{match.homeTeam.name}</p>
+        </div>
+
+        {/* Match metadata */}
+        <div className="text-center max-w-xs">
+          <p className="text-white text-lg mb-2 font-semibold">{match.homeTeam.name} vs {match.awayTeam.name}</p>
+          <p className="text-sm">Stadium: {match.stadium.name}</p>
+          <p className="text-sm">Date: {new Date(match.date).toLocaleDateString()}</p>
+          <p className="text-sm mb-4">Sold tickets: {match.soldTickets}</p>
+          <button
+            onClick={handleBuyTicket}
+            className="w-full px-4 py-2 bg-[#19e619] text-[#112211] text-sm font-bold rounded-xl"
+          >
+            Buy Ticket – €{price}
+          </button>
+        </div>
+
+        {/* Away team */}
+        <div className="text-center">
+          <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-20 mx-auto mb-2" />
+          <p className="text-xl font-semibold">{match.awayTeam.name}</p>
         </div>
       </div>
+      <div>
+        <h1 className="text-xl font-semibold">Select a seat</h1>
+
+        <label className="block mb-2 text-white">
+  Filter by row:
+  <select
+    value={selectedRow ?? ""}
+    onChange={(e) => {
+      setSelectedRow(e.target.value || null);
+      setCurrentPage(0); // reset pagina bij rijwissel
+    }}
+    className="bg-[#19e619] border border-gray-300 text-white-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+  >
+    <option value="">All</option>
+    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map(letter => (
+      <option key={letter} value={letter}>{letter}</option>
+    ))}
+  </select>
+</label>
+
+<div className="flex justify-center mt-6 gap-4 mb-6">
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+          disabled={currentPage === 0}
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em] disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="mt-2 text-sm text-center">Page {currentPage + 1} of {totalPages}</span>
+        <button
+          onClick={() => setCurrentPage((p) => p + 1)}
+          disabled={currentPage + 1 >= totalPages}
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em] disabled:opacity-50"
+        >
+          Next
+        </button>
+        </div>
+        <div className="grid grid-cols-10 gap-2">
+        {seats.map(seat => {
+          const key = `${seat.row}-${seat.seatIndex}`;
+          const statusObj = liveSeatStatus[key];
+        //  console.log(statusObj)
+          const status = statusObj?.status;
+          const seatOwnerId = statusObj?.userId;
+
+          const isSelectedByMe = status === "selected" && seatOwnerId === userId;
+          const isSelectedByOthers = status === "selected" && seatOwnerId !== userId;
+
+          const isDisabled = seat.isReserved || 
+                   (statusObj && (statusObj.status === "reserved" || 
+                   (statusObj.status === "selected" && statusObj.userId !== userId)));
+          return (
+          <button
+          
+            key={seat.id}
+            disabled={isDisabled}
+            className={`p-2 border rounded ${
+                        seat.isReserved || status === "reserved"
+                          ? "bg-gray-400"
+                          : isSelectedByMe
+                          ? "bg-blue-500 text-white"
+                          : isSelectedByOthers
+                          ? "bg-yellow-400"
+                          : "bg-green-500"
+                      }`}
+            onClick={() => {
+              const isAlreadySelectedByMe = selectedRow === seat.row && selectedSeatIndex === seat.seatIndex;
+              const newKey = `${seat.row}-${seat.seatIndex}`;
+              console.log(isAlreadySelectedByMe)
+              console.log(seat.row, selectedRow, seat.seatIndex, selectedSeatIndex)
+              console.log(currentlySelectedKey)
+
+              if (isSelectedByOthers) return;
+
+              if (currentlySelectedKey === newKey) {
+                setSelectedRow(null);
+                setSelectedSeatIndex(null);
+                setCurrentlySelectedKey(null);
+                sendSeatSelection(seat.row, seat.seatIndex, "available", userId ?? 0);
+              } 
+              else {
+                if(currentlySelectedKey){
+                  const [prevRow, prevIndex] = currentlySelectedKey.split('-');
+                  sendSeatSelection(prevRow, parseInt(prevIndex), "available", userId ?? 0);
+                }
+                setSelectedRow(seat.row);
+                setSelectedSeatIndex(seat.seatIndex);
+                sendSeatSelection(seat.row, seat.seatIndex, "selected", userId?? 0);
+                setCurrentlySelectedKey(newKey)
+              }
+              // setSelectedRow(seat.row); 
+                            
+              // setSelectedSeatIndex(seat.seatIndex);
+                            
+              // sendSeatSelection(seat.row, seat.seatIndex, "selected", userId ?? 0);
+              }}
+          >
+            {`${seat.row}${seat.seatIndex}`}
+          </button>
+          );
+        })}
+      </div>
+      </div>
+    </div>
     );
   }
 </file>
@@ -1880,9 +2593,9 @@ const Layout = () => {
             <Link className="text-white text-sm font-medium leading-normal" to="/">
               Home
             </Link>
-            <a className="text-white text-sm font-medium leading-normal" href="#">
+            <Link className="text-white text-sm font-medium leading-normal" to="/matches">
               Matches
-            </a>
+            </Link>
             <Link className="text-white text-sm font-medium leading-normal" to="/stadiums">
               Stadiums
             </Link>
@@ -1923,9 +2636,9 @@ const Layout = () => {
               <Link to="/login" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#19e619] text-white text-sm font-bold leading-normal tracking-[0.015em]">
                 <span className="truncate">Sign in</span>
               </Link>
-              <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#244724] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+              <Link to="/register" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#244724] text-white text-sm font-bold leading-normal tracking-[0.015em]">
                 <span className="truncate">Register</span>
-              </button>
+              </Link>
               </>
             )}
            
@@ -1944,13 +2657,51 @@ const Layout = () => {
 export default Layout;
 </file>
 
+<file path="src/router.tsx">
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import Home from "./pages/Home";
+import BuyTicket from './pages/buyTickets';
+import Layout from './components/layout';
+import StadiumPage  from './pages/Stadium';
+import TeamPage from './pages/Team';
+import MatchDetails from './pages/MatchDetails';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import MatchPage from './pages/MatchPage';
+
+const AppRouter = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout/>}>
+          <Route index element={<Home />} />
+          <Route path="/buy-ticket" element={<BuyTicket />} />
+          <Route path="/stadiums" element={<StadiumPage />} />
+          <Route path="/teams" element={<TeamPage />} />
+          <Route path="/matches" element={<MatchPage/>} />
+          <Route path="/match/:matchId" element={<MatchDetails />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage/>}/>
+        </Route>  
+      </Routes>
+    </Router>
+  );
+};
+
+export default AppRouter;
+</file>
+
 <file path="src/services/matchService.ts">
 import axios from "axios";
 import { Match } from "../types/match";
+import { getToken } from "./loginService";
+import { promises } from "dns";
 
 
 const API_URLGetUpComingMatches = "http://localhost:8080/api/auth/matches/fixtures";
 const API_URLGetMatchById = "http://localhost:8080/api/auth/matches/";
+const API_URLGetFilterMatches = "http://localhost:8080/api/auth/matches/filter"
 
 export const getUpComingMatches = async (
     leagueId: number,
@@ -1960,8 +2711,10 @@ export const getUpComingMatches = async (
     try {
       const response = await axios.get(API_URLGetUpComingMatches, {
         params: { leagueId, season, limit },
-        withCredentials: true,
-      });
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+              }
+        });
       const transformedMatches: Match[] = response.data.map((match: any) => ({
         id: match.id,
         image: match.homeTeam.logo, 
@@ -1984,8 +2737,10 @@ export const getMatchById = async(
   ): Promise<Match> => {
     try {
       const response = await axios.get(API_URLGetMatchById + matchId, {
-        withCredentials: true,
-      });
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+              }
+        });
       console.log(response)
       const match = response.data; 
       const transformedMatch: Match = {
@@ -1998,44 +2753,54 @@ export const getMatchById = async(
         homeTeam: match.homeTeam,
         stadium: match.stadium,
         soldTickets: match.soldTickets,
+        date: match.date
       };
       return transformedMatch;
     } catch (error) { 
       console.error("Error fetching matches:", error);
       throw new Error("Failed to fetch matches");
     }
-  };
-</file>
-
-<file path="src/router.tsx">
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-import Home from "./pages/Home";
-import BuyTicket from './pages/buyTickets';
-import Layout from './components/layout';
-import StadiumPage  from './pages/Stadium';
-import TeamPage from './pages/Team';
-import MatchDetails from './pages/MatchDetails';
-import LoginPage from './pages/LoginPage';
-
-const AppRouter = () => {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout/>}>
-          <Route index element={<Home />} />
-          <Route path="/buy-ticket" element={<BuyTicket />} />
-          <Route path="/stadiums" element={<StadiumPage />} />
-          <Route path="/teams" element={<TeamPage />} />
-          <Route path="/match/:matchId" element={<MatchDetails />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Route>  
-      </Routes>
-    </Router>
-  );
 };
 
-export default AppRouter;
+export const filterMatches = async (
+  page: number,
+  size: number,
+  teamName?: string,
+  stadiumName?: string,
+  date?: string
+): Promise<{content: Match[]; totalPages: number}> =>{
+
+  const params: any = { page, size };
+  if (teamName) params.teamName = teamName;
+  if (stadiumName) params.stadiumName = stadiumName;
+  if (date) params.matchDate = date;
+
+  try{
+    const response = await axios.get(API_URLGetFilterMatches, {
+      params,
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+              }
+    })
+    const transformedMatches: Match[] = response.data.content.map((match: any) => ({
+        id: match.id,
+        image: match.homeTeam.logo, 
+        title: `${match.homeTeam.name} vs ${match.awayTeam.name}`,
+        location: match.stadium.name,
+        awayTeam: match.awayTeam,
+        homeTeam: match.homeTeam,
+        stadium: match.stadium,
+        soldTickets: match.soldTickets,
+      }));
+      return {
+      content: transformedMatches,
+      totalPages: response.data.totalPages,
+      };
+    } catch (error) { 
+      console.error("Error fetching matches:", error);
+      throw new Error("Failed to fetch matches");
+    }
+}
 </file>
 
 </files>

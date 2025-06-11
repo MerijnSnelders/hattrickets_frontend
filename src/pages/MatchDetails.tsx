@@ -6,20 +6,43 @@ import { buyTicket } from "../services/ticketService";
 import Swal from 'sweetalert2';
 import { isLoggedIn } from "@/services/loginService";
 import { useNavigate } from 'react-router-dom';
+import { getSeatsForMatch } from "@/services/seatService";
+import { Seat } from "@/types/seat";
+import { useSeatWebSocket } from "@/hooks/useSeatWebSocket";
+
 
 
 
 export default function MatchDetails() {
     const { matchId } = useParams<{ matchId: string }>();
+    const parsedMatchId = matchId ? parseInt(matchId, 10) : undefined;
     const [match, setMatch] = useState<Match>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [userId, setUserId] = useState<number>();
+    const [seats, setSeats] = useState<Seat[]>([]);
+    const [selectedSeatIndex, setSelectedSeatIndex] = useState<number | null>(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [selectedRow, setSelectedRow] = useState<string | null>(null);
+    const [totalPages, setTotalPages] = useState(1);
+    const [liveSeatStatus, setLiveSeatStatus] = useState<Record<string, { status: string; userId: number }>>({});
+    const [currentlySelectedKey, setCurrentlySelectedKey] = useState<string | null>(null);
+    const [initialSyncDone, setInitialSyncDone] = useState(false);
+
     const navigate = useNavigate();
+    
   
     // 👇 Deze horen buiten de handler
    // const userId = 1;
     const price = 12.5;
+
+    const { sendSeatSelection } = useSeatWebSocket(parsedMatchId ?? 0, (message) => {
+      const key = `${message.row}-${message.seatIndex}`;
+      setLiveSeatStatus((prev) => ({ ...prev, [key]: { status: message.status, userId: message.userId }}));
+    },
+    currentlySelectedKey,
+    userId
+  );
   
     useEffect(() => {
       async function fetchMatch() {
@@ -31,6 +54,7 @@ export default function MatchDetails() {
             }
             else{
               setUserId(userIdData)
+              //console.log(userId)
             }
           }
           catch{
@@ -41,6 +65,66 @@ export default function MatchDetails() {
           const id = parseInt(matchId, 10);
           const data = await getMatchById(id);
           setMatch(data);
+          try{
+            const seatsData = await getSeatsForMatch(id, currentPage, 200, selectedRow);
+            console.log("SEATS DATA:", seatsData);
+             const updatedLiveStatus: Record<string, { status: string; userId: number }> = {};
+          //  type SeatWrapper = { seat: Seat };
+
+          const mappedSeats = seatsData.content.map((wrapper: any) => {
+            const seat = wrapper.seat;
+            const key = `${seat.row}-${seat.seatIndex}`;
+          
+
+            if (wrapper.selected) {
+              updatedLiveStatus[key] = {
+                status: "selected",
+                userId: wrapper.selectingUserId
+              };
+              
+              // If this is our selection, update local state
+              if (wrapper.selectingUserId === userId) {
+                setCurrentlySelectedKey(key);
+                setSelectedRow(seat.row);
+                setSelectedSeatIndex(seat.seatIndex);
+              }
+            } 
+            else if (seat.reserved) {
+              updatedLiveStatus[key] = {
+                status: "reserved",
+                userId: -1
+              };
+            }
+
+            return {
+              id: seat.id,
+              row: seat.row,
+              seatIndex: seat.seatIndex,
+              isReserved: seat.reserved,
+            };
+          });
+          setSeats(mappedSeats)
+          setLiveSeatStatus(prev => ({ ...prev, ...updatedLiveStatus }));
+          setInitialSyncDone(true);
+
+            // setSeats(
+            //   seatsData.content.map((wrapper: any) => ({
+            //     id: wrapper.seat.id,
+            //     row: wrapper.seat.row,
+            //     seatIndex: wrapper.seat.seatIndex,
+            //     isReserved: wrapper.seat.reserved, // 👈 hier map je het
+            //   }))
+            // );
+            setTotalPages(seatsData.totalPages);
+            //console.log(seatsData.content);
+            //console.log(seatsData.content[0]);
+
+            //console.log(seats[0].isReserved);
+            // console.log(seats[0].id); 
+          }
+          catch(error){
+            setError("failed to set seats: " + error)
+          }
         } catch (error) {
           setError("Failed to load match data");
         } finally {
@@ -49,15 +133,17 @@ export default function MatchDetails() {
       }
   
       if (matchId) fetchMatch();
-    }, [matchId]);
+    }, [matchId, currentPage, selectedRow]);
   
     const handleBuyTicket = async () => {
       try {
         if (!matchId) throw new Error("No match ID");
-        const parsedMatchId = parseInt(matchId, 10);
         if (!userId) throw new Error("No user ID");
-        alert(userId);
-        const response = await buyTicket({userId: userId, matchId: parsedMatchId, price});
+        // alert(userId);
+        if(!selectedRow) throw new Error("no selected row")
+        if(!selectedSeatIndex) throw new Error("no selected seat idex")
+        const response = await buyTicket({userId: userId, matchId: parsedMatchId ?? 0, price: price, row: selectedRow, seatIndex: selectedSeatIndex});
+        sendSeatSelection(selectedRow, selectedSeatIndex, "reserved", userId ?? 0);
         Swal.fire({
             icon: 'success',
             title: 'Ticket purchased!',
@@ -75,6 +161,49 @@ export default function MatchDetails() {
           confirmButtonText: 'Confirm'
         })
         console.error(error);
+      }
+    };
+
+    const handleSeatClick = (seat: Seat) => {
+      
+      const key = `${seat.row}-${seat.seatIndex}`;
+      const statusObj = liveSeatStatus[key];
+      const selectedEntry = Object.entries(liveSeatStatus).find(
+  ([key, value]) => value.status === "selected" && value.userId === userId
+);
+      
+      // Prevent action if seat is reserved or selected by others
+      if (seat.isReserved || (statusObj?.status === "selected" && statusObj.userId !== userId)) {
+        return;
+      }
+      console.log("hiiiiiii", liveSeatStatus, currentlySelectedKey)
+      console.log("key", key)
+      console.log("selectedEntry", selectedEntry?.[0])
+      console.log("status ob", statusObj)
+      if (currentlySelectedKey === key) {
+        // Deselect current seat
+        setSelectedRow(null);
+        setSelectedSeatIndex(null);
+        setCurrentlySelectedKey(null);
+        sendSeatSelection(seat.row, seat.seatIndex, "available", userId ?? 0);
+      } else {
+         // Select new seat'
+         console.log("heeeeeeeeeeerrrrrrrrrrrrrrrreeeeeeeeeeeee")
+        //  if (currentlySelectedKey) {
+        //    // Release previous selection
+        //    console.log("heeeeeeeeeeerrrrrrrrrrrrrrrreeeeeeeeeeeee  1111111111")
+        //   const [prevRow, prevIndex] = currentlySelectedKey.split('-');
+        //   sendSeatSelection(prevRow, parseInt(prevIndex), "available", userId ?? 0);
+        //   }
+          if(selectedEntry){
+          console.log("in here")
+          const [prevRow, prevIndex] = selectedEntry?.[0].split('-');
+          sendSeatSelection(prevRow, parseInt(prevIndex), "available", userId ?? 0);
+          }
+        setSelectedRow(seat.row);
+        setSelectedSeatIndex(seat.seatIndex);
+        setCurrentlySelectedKey(key);
+        sendSeatSelection(seat.row, seat.seatIndex, "selected", userId ?? 0);
       }
     };
   
@@ -124,34 +253,82 @@ export default function MatchDetails() {
           <p className="text-xl font-semibold">{match.awayTeam.name}</p>
         </div>
       </div>
+      <div>
+        <h1 className="text-xl font-semibold">Select a seat</h1>
+
+        <label className="block mb-2 text-white">
+  Filter by row:
+  <select
+    value={selectedRow ?? ""}
+    onChange={(e) => {
+      setSelectedRow(e.target.value || null);
+      setCurrentPage(0); // reset pagina bij rijwissel
+    }}
+    className="bg-[#19e619] border border-gray-300 text-white-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+  >
+    <option value="">All</option>
+    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map(letter => (
+      <option key={letter} value={letter}>{letter}</option>
+    ))}
+  </select>
+</label>
+
+<div className="flex justify-center mt-6 gap-4 mb-6">
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+          disabled={currentPage === 0}
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em] disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="mt-2 text-sm text-center">Page {currentPage + 1} of {totalPages}</span>
+        <button
+          onClick={() => setCurrentPage((p) => p + 1)}
+          disabled={currentPage + 1 >= totalPages}
+          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em] disabled:opacity-50"
+        >
+          Next
+        </button>
+        </div>
+        <div className="grid grid-cols-10 gap-2">
+          
+        {seats.map(seat => {
+          const key = `${seat.row}-${seat.seatIndex}`;
+          const statusObj = liveSeatStatus[key];
+        //  console.log(statusObj)
+          const status = statusObj?.status;
+          const seatOwnerId = statusObj?.userId;
+
+          const isSelectedByMe = status === "selected" && seatOwnerId === userId;
+          // if(isSelectedByMe) console.log("selected by me", userId, key, currentlySelectedKey)
+          const isSelectedByOthers = status === "selected" && seatOwnerId !== userId;
+
+          const isDisabled = seat.isReserved || 
+                   (statusObj && (statusObj.status === "reserved" || 
+                   (statusObj.status === "selected" && statusObj.userId !== userId)));
+          return (
+          <button
+          
+            key={seat.id}
+            disabled={isDisabled}
+            className={`p-2 border rounded ${
+                        seat.isReserved || status === "reserved"
+                          ? "bg-gray-400"
+                          : isSelectedByMe
+                          ? "bg-blue-500 text-white"
+                          : isSelectedByOthers
+                          ? "bg-yellow-400"
+                          : "bg-green-500"
+                      }`}
+            onClick={() => handleSeatClick(seat)}
+          >
+            {`${seat.row}${seat.seatIndex}`}
+          </button>
+          );
+        })}
+      </div>
+      </div>
     </div>
-      // <div className="p-6">
-      //   <h1 className="text-2xl font-bold mb-4 text-white">Match Details</h1>
-      //   <div className="bg-[#008000] text-white rounded-2xl shadow p-6 flex items-center justify-between">
-      //     <div className="text-center">
-      //       <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="h-16 mx-auto" />
-      //       <p>{match.homeTeam.name}</p>
-      //     </div>
-      //     <div className="text-center">
-      //       <p className="text-sm text-white">
-      //         {match.stadium.name}
-      //       </p>
-      //       <p className="text-sm text-white">
-      //         sold tickets: {match.soldTickets}
-      //       </p>
-      //       <button
-      //         onClick={handleBuyTicket}
-      //         className="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#19e619] text-[#112211] text-sm font-bold leading-normal tracking-[0.015em]"
-      //       >
-      //         <span className="truncate">Buy ticket</span>
-      //       </button>
-      //     </div>
-      //     <div className="text-center">
-      //       <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="h-16 mx-auto" />
-      //       <p>{match.awayTeam.name}</p>
-      //     </div>
-      //   </div>
-      // </div>
     );
   }
   

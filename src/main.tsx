@@ -1,3 +1,8 @@
+if (typeof global === 'undefined') {
+  // @ts-ignore
+  window.global = window;
+}
+
 import { createRoot } from 'react-dom/client'
 import "./styles/global.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
