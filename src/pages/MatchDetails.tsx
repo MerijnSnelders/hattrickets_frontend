@@ -9,9 +9,11 @@ import { useNavigate } from 'react-router-dom';
 import { getSeatsForMatch } from "@/services/seatService";
 import { Seat } from "@/types/seat";
 import { useSeatWebSocket } from "@/hooks/useSeatWebSocket";
+import { formatDistanceToNowStrict } from "date-fns";
 
 
 
+ 
 
 export default function MatchDetails() {
     const { matchId } = useParams<{ matchId: string }>();
@@ -25,20 +27,17 @@ export default function MatchDetails() {
     const [currentPage, setCurrentPage] = useState(0);
     const [selectedRow, setSelectedRow] = useState<string | null>(null);
     const [totalPages, setTotalPages] = useState(1);
-    const [liveSeatStatus, setLiveSeatStatus] = useState<Record<string, { status: string; userId: number }>>({});
+    const [liveSeatStatus, setLiveSeatStatus] = useState<Record<string, { status: string; userId: number; selectedUntil: string | null }>>({});
     const [currentlySelectedKey, setCurrentlySelectedKey] = useState<string | null>(null);
-    const [initialSyncDone, setInitialSyncDone] = useState(false);
 
     const navigate = useNavigate();
     
-  
-    // 👇 Deze horen buiten de handler
-   // const userId = 1;
+
     const price = 12.5;
 
     const { sendSeatSelection } = useSeatWebSocket(parsedMatchId ?? 0, (message) => {
       const key = `${message.row}-${message.seatIndex}`;
-      setLiveSeatStatus((prev) => ({ ...prev, [key]: { status: message.status, userId: message.userId }}));
+      setLiveSeatStatus((prev) => ({ ...prev, [key]: { status: message.status, userId: message.userId, selectedUntil: message.selectedUntil ?? null }}));
     },
     currentlySelectedKey,
     userId
@@ -54,7 +53,6 @@ export default function MatchDetails() {
             }
             else{
               setUserId(userIdData)
-              //console.log(userId)
             }
           }
           catch{
@@ -68,8 +66,7 @@ export default function MatchDetails() {
           try{
             const seatsData = await getSeatsForMatch(id, currentPage, 200, selectedRow);
             console.log("SEATS DATA:", seatsData);
-             const updatedLiveStatus: Record<string, { status: string; userId: number }> = {};
-          //  type SeatWrapper = { seat: Seat };
+             const updatedLiveStatus: Record<string, { status: string; userId: number, selectedUntil: string }> = {};
 
           const mappedSeats = seatsData.content.map((wrapper: any) => {
             const seat = wrapper.seat;
@@ -79,10 +76,10 @@ export default function MatchDetails() {
             if (wrapper.selected) {
               updatedLiveStatus[key] = {
                 status: "selected",
-                userId: wrapper.selectingUserId
+                userId: wrapper.selectingUserId,
+                selectedUntil: "0"
               };
               
-              // If this is our selection, update local state
               if (wrapper.selectingUserId === userId) {
                 setCurrentlySelectedKey(key);
                 setSelectedRow(seat.row);
@@ -92,7 +89,8 @@ export default function MatchDetails() {
             else if (seat.reserved) {
               updatedLiveStatus[key] = {
                 status: "reserved",
-                userId: -1
+                userId: -1,
+                selectedUntil: "0"
               };
             }
 
@@ -105,22 +103,7 @@ export default function MatchDetails() {
           });
           setSeats(mappedSeats)
           setLiveSeatStatus(prev => ({ ...prev, ...updatedLiveStatus }));
-          setInitialSyncDone(true);
-
-            // setSeats(
-            //   seatsData.content.map((wrapper: any) => ({
-            //     id: wrapper.seat.id,
-            //     row: wrapper.seat.row,
-            //     seatIndex: wrapper.seat.seatIndex,
-            //     isReserved: wrapper.seat.reserved, // 👈 hier map je het
-            //   }))
-            // );
-            setTotalPages(seatsData.totalPages);
-            //console.log(seatsData.content);
-            //console.log(seatsData.content[0]);
-
-            //console.log(seats[0].isReserved);
-            // console.log(seats[0].id); 
+          setTotalPages(seatsData.totalPages); 
           }
           catch(error){
             setError("failed to set seats: " + error)
@@ -139,7 +122,6 @@ export default function MatchDetails() {
       try {
         if (!matchId) throw new Error("No match ID");
         if (!userId) throw new Error("No user ID");
-        // alert(userId);
         if(!selectedRow) throw new Error("no selected row")
         if(!selectedSeatIndex) throw new Error("no selected seat idex")
         const response = await buyTicket({userId: userId, matchId: parsedMatchId ?? 0, price: price, row: selectedRow, seatIndex: selectedSeatIndex});
@@ -169,34 +151,19 @@ export default function MatchDetails() {
       const key = `${seat.row}-${seat.seatIndex}`;
       const statusObj = liveSeatStatus[key];
       const selectedEntry = Object.entries(liveSeatStatus).find(
-  ([key, value]) => value.status === "selected" && value.userId === userId
+      ([key, value]) => value.status === "selected" && value.userId === userId
 );
       
-      // Prevent action if seat is reserved or selected by others
       if (seat.isReserved || (statusObj?.status === "selected" && statusObj.userId !== userId)) {
         return;
       }
-      console.log("hiiiiiii", liveSeatStatus, currentlySelectedKey)
-      console.log("key", key)
-      console.log("selectedEntry", selectedEntry?.[0])
-      console.log("status ob", statusObj)
       if (currentlySelectedKey === key) {
-        // Deselect current seat
         setSelectedRow(null);
         setSelectedSeatIndex(null);
         setCurrentlySelectedKey(null);
         sendSeatSelection(seat.row, seat.seatIndex, "available", userId ?? 0);
       } else {
-         // Select new seat'
-         console.log("heeeeeeeeeeerrrrrrrrrrrrrrrreeeeeeeeeeeee")
-        //  if (currentlySelectedKey) {
-        //    // Release previous selection
-        //    console.log("heeeeeeeeeeerrrrrrrrrrrrrrrreeeeeeeeeeeee  1111111111")
-        //   const [prevRow, prevIndex] = currentlySelectedKey.split('-');
-        //   sendSeatSelection(prevRow, parseInt(prevIndex), "available", userId ?? 0);
-        //   }
           if(selectedEntry){
-          console.log("in here")
           const [prevRow, prevIndex] = selectedEntry?.[0].split('-');
           sendSeatSelection(prevRow, parseInt(prevIndex), "available", userId ?? 0);
           }
@@ -206,6 +173,13 @@ export default function MatchDetails() {
         sendSeatSelection(seat.row, seat.seatIndex, "selected", userId ?? 0);
       }
     };
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setLiveSeatStatus((prev) => ({ ...prev }));
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }, []);
   
     if (loading) return <div className="p-4">Loading...</div>;
     if (error) return <div className="p-4 text-red-500">{error}</div>;
@@ -262,7 +236,7 @@ export default function MatchDetails() {
     value={selectedRow ?? ""}
     onChange={(e) => {
       setSelectedRow(e.target.value || null);
-      setCurrentPage(0); // reset pagina bij rijwissel
+      setCurrentPage(0);
     }}
     className="bg-[#19e619] border border-gray-300 text-white-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
   >
@@ -295,13 +269,13 @@ export default function MatchDetails() {
         {seats.map(seat => {
           const key = `${seat.row}-${seat.seatIndex}`;
           const statusObj = liveSeatStatus[key];
-        //  console.log(statusObj)
           const status = statusObj?.status;
           const seatOwnerId = statusObj?.userId;
-
           const isSelectedByMe = status === "selected" && seatOwnerId === userId;
-          // if(isSelectedByMe) console.log("selected by me", userId, key, currentlySelectedKey)
           const isSelectedByOthers = status === "selected" && seatOwnerId !== userId;
+          const remainingTime = status === "selected" && seatOwnerId === userId && statusObj?.selectedUntil
+            ? Math.max(0, Math.floor((new Date(statusObj.selectedUntil).getTime() - new Date().getTime()) / 1000))
+            : null;
 
           const isDisabled = seat.isReserved || 
                    (statusObj && (statusObj.status === "reserved" || 
@@ -323,6 +297,9 @@ export default function MatchDetails() {
             onClick={() => handleSeatClick(seat)}
           >
             {`${seat.row}${seat.seatIndex}`}
+            {isSelectedByMe && remainingTime !== null && (
+              <div className="text-xs mt-1 text-white">{remainingTime}s</div>
+            )}
           </button>
           );
         })}

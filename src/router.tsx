@@ -9,6 +9,8 @@ import MatchDetails from './pages/MatchDetails';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import MatchPage from './pages/MatchPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
+import StatisticsPage from './pages/StatisticsPage'
 
 const AppRouter = () => {
   return (
@@ -23,6 +25,8 @@ const AppRouter = () => {
           <Route path="/match/:matchId" element={<MatchDetails />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage/>}/>
+          <Route path="/changePassword" element={<ChangePasswordPage/>}/>
+          <Route path="/admin/stats" element={<StatisticsPage />} />
         </Route>  
       </Routes>
     </Router>

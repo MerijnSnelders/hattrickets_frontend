@@ -51,3 +51,14 @@ export const getUserRole = (): string | null => {
     const decoded = decodeToken();
     return decoded?.role || null;
 };
+
+export const changePassword = async (data: {
+  email: string;
+  oldPassword: string;
+  newPassword: string;
+}) => {
+  const response = await axios.put(`${API_URL}/changePassword`, data);
+  return response
+};
+
+

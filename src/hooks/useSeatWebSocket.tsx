@@ -9,6 +9,7 @@ interface SeatSelectionMessage {
   seatIndex: number;
   status: "selected" | "available";
   userId: number;
+  selectedUntil?: string;
 }
 
 export const useSeatWebSocket = (
@@ -47,22 +48,22 @@ export const useSeatWebSocket = (
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
       onConnect: () => {
-        console.log("✅ Connected to WebSocket");
+        //console.log("Connected to WebSocket");
         client.subscribe(`/topic/seats/${matchId}`, (msg) => {
           try {
             const body: SeatSelectionMessage = JSON.parse(msg.body);
-            console.log("📩 Received WebSocket message:", body);
+           // console.log("Received WebSocket message:", body);
             onSeatUpdate(body);
           } catch (error) {
-            console.error("❌ Error parsing WebSocket message:", error);
+           // console.error("Error parsing WebSocket message:", error);
           }
         });
       },
       onDisconnect: () => {
-        console.log("⚠️ WebSocket disconnected");
+        //console.log("WebSocket disconnected");
       },
       onStompError: (frame) => {
-        console.error("❌ STOMP error:", frame);
+       // console.error("STOMP error:", frame);
       },
     });
 
@@ -70,14 +71,13 @@ export const useSeatWebSocket = (
     clientRef.current = client;
 
     return () => {
-      console.log("🧹 Cleaning up WebSocket");
+     // console.log("Cleaning up WebSocket");
       if (clientRef.current?.active) {
         clientRef.current.deactivate();
       }
     };
   }, [matchId, onSeatUpdate]);
 
-  // Separate effect for handling seat release on unmount or change
   useEffect(() => {
     return () => {
       if (currentlySelectedKey && userId) {
