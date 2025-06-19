@@ -2,15 +2,11 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { SeatSelectionMessage } from "@/types/ticket";
 
-interface SeatSelectionMessage {
-  matchId: number;
-  row: string;
-  seatIndex: number;
-  status: "selected" | "available";
-  userId: number;
-  selectedUntil?: string;
-}
+
+
+
 
 export const useSeatWebSocket = (
   matchId: number, 
@@ -42,6 +38,9 @@ export const useSeatWebSocket = (
 
   useEffect(() => {
     const socket = new SockJS("http://localhost:8080/ws");
+    if ((window as any).Cypress) {
+      (window as any).seatSockJS = socket;
+    }
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
@@ -69,6 +68,8 @@ export const useSeatWebSocket = (
 
     client.activate();
     clientRef.current = client;
+    
+
 
     return () => {
      // console.log("Cleaning up WebSocket");

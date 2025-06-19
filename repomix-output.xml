@@ -42,6 +42,13 @@ The content is organized as follows:
 <directory_structure>
 .gitignore
 components.json
+cypress.config.ts
+cypress/e2e/home.cy.ts
+cypress/e2e/homePageTest.cy.ts
+cypress/e2e/login.cy.ts
+cypress/fixtures/example.json
+cypress/support/commands.ts
+cypress/support/e2e.ts
 eslint.config.js
 index.html
 package.json
@@ -74,14 +81,17 @@ src/pages/Home.tsx
 src/pages/LoginPage.tsx
 src/pages/MatchDetails.tsx
 src/pages/MatchPage.tsx
+src/pages/NoAccessPage.tsx
 src/pages/RegisterPage.tsx
 src/pages/Stadium.tsx
+src/pages/StatisticsPage.tsx
 src/pages/Team.tsx
 src/router.tsx
 src/services/loginService.ts
 src/services/matchService.ts
 src/services/seatService.ts
 src/services/stadiumService.ts
+src/services/statisticsService.ts
 src/services/teamService.ts
 src/services/ticketService.ts
 src/styles/buyTickets.css
@@ -91,6 +101,7 @@ src/types/auth.ts
 src/types/match.ts
 src/types/seat.ts
 src/types/stadium.ts
+src/types/statistics.ts
 src/types/team.ts
 src/types/ticket.ts
 src/vite-env.d.ts
@@ -104,80 +115,138 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
-<file path="src/pages/ChangePasswordPage.tsx">
-import { useEffect, useState } from "react";
-import { changePassword } from "@/services/loginService"
-import Swal from "sweetalert2";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+<file path="cypress.config.ts">
+import { defineConfig } from 'cypress'
 
-export default function ChangePasswordPage() {
-  const [email, setEmail] = useState("");
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const handleSubmit = async () => {
+export default defineConfig({
+  e2e: {
+    baseUrl: 'http://localhost:5173', // adjust if needed
+    supportFile: 'cypress/support/e2e.ts',
+    specPattern: 'cypress/e2e/**/*.cy.{js,ts}',
+  }
+})
+</file>
 
-    try {
-      await changePassword({ email, oldPassword, newPassword });
-      Swal.fire("Success", "Password changed!", "success");
-      setOldPassword("");
-      setNewPassword("");
-    } catch {
-      Swal.fire("Error", "Incorrect old password", "error");
-    }
-  };
+<file path="cypress/e2e/home.cy.ts">
+describe('template spec', () => {
+  it('passes', () => {
+    cy.visit('https://example.cypress.io')
+  })
+})
+</file>
 
-  return (
-    <div className={cn("flex flex-col gap-6 mt-3 items-center")}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Change password</CardTitle>
+<file path="cypress/e2e/homePageTest.cy.ts">
+describe('Home Page', () => {
+  it('should load and show header text', () => {
+    cy.visit('http://localhost:5173'); // Or the correct port for Vite
+    cy.contains('Featured Matches').should('exist');
+  });
+});
+</file>
 
-        </CardHeader>
-        <CardContent>
-          <form>
-            <div className="grid gap-6">
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-3">
-                  <div className="flex items-center">
-                    <Label htmlFor="password">Old Password</Label>
-                  </div>
-                  <Input id="password" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)}/>
-                </div>
-                <div className="grid gap-3">
-                  <div className="flex items-center">
-                    <Label htmlFor="password">New Password</Label>
-                  </div>
-                  <Input id="password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                </div>
-                <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); handleSubmit()}}>
-                  Change password
-                </Button>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
-    </div>
-  );
+<file path="cypress/e2e/login.cy.ts">
+describe('Login Page', () => {
+  it('logs in successfully with valid credentials', () => {
+    cy.visit('/login');
+
+    cy.get('input[id="email"]').type('test.test@gmail.com');
+
+    cy.get('input[id="password"]').type('123');
+
+    cy.get('button[type="submit"]').click();
+
+    cy.url().should('not.include', '/login');
+
+    cy.url().should('include', '/');
+
+  });
+
+  it('shows error with invalid credentials', () => {
+    cy.visit('/login');
+
+    cy.get('input[id="email"]').type('wrong@test.com');
+    cy.get('input[id="password"]').type('wrongpass');
+    cy.get('button[type="submit"]').click();
+  });
+});
+</file>
+
+<file path="cypress/fixtures/example.json">
+{
+  "name": "Using fixtures to represent data",
+  "email": "hello@cypress.io",
+  "body": "Fixtures are a great way to mock data for responses to routes"
 }
+</file>
+
+<file path="cypress/support/commands.ts">
+/// <reference types="cypress" />
+// ***********************************************
+// This example commands.ts shows you how to
+// create various custom commands and overwrite
+// existing commands.
+//
+// For more comprehensive examples of custom
+// commands please read more here:
+// https://on.cypress.io/custom-commands
+// ***********************************************
+//
+//
+// -- This is a parent command --
+// Cypress.Commands.add('login', (email, password) => { ... })
+//
+//
+// -- This is a child command --
+// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
+//
+//
+// -- This is a dual command --
+// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
+//
+//
+// -- This will overwrite an existing command --
+// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+//
+// declare global {
+//   namespace Cypress {
+//     interface Chainable {
+//       login(email: string, password: string): Chainable<void>
+//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
+//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
+//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
+//     }
+//   }
+// }
+</file>
+
+<file path="cypress/support/e2e.ts">
+// ***********************************************************
+// This example support/e2e.ts is processed and
+// loaded automatically before your test files.
+//
+// This is a great place to put global configuration and
+// behavior that modifies Cypress.
+//
+// You can change the location of this file or turn off
+// automatically serving support files with the
+// 'supportFile' configuration option.
+//
+// You can read more here:
+// https://on.cypress.io/configuration
+// ***********************************************************
+
+// Import commands.js using ES2015 syntax:
+import './commands'
+</file>
+
+<file path="src/pages/NoAccessPage.tsx">
+const NoAccessPage = () => (
+  <div className="p-10 text-center text-red-500 text-3xl">
+    🙅🏿‍♂️🙅🏼‍♂️ You do not have access to this page. 🙅‍♂️🙅‍♀️
+  </div>
+);
+
+export default NoAccessPage;
 </file>
 
 <file path=".gitignore">
@@ -781,108 +850,88 @@ function Label({
 export { Label }
 </file>
 
-<file path="src/hooks/useSeatWebSocket.tsx">
-// hooks/useSeatWebSocket.tsx
-import { useEffect, useRef, useCallback } from "react";
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
-
-interface SeatSelectionMessage {
-  matchId: number;
-  row: string;
-  seatIndex: number;
-  status: "selected" | "available";
-  userId: number;
-  selectedUntil?: string;
-}
-
-export const useSeatWebSocket = (
-  matchId: number, 
-  onSeatUpdate: (message: SeatSelectionMessage) => void,
-  currentlySelectedKey: string | null,
-  userId: number | undefined
-) => {
-  const clientRef = useRef<Client | null>(null);
-
-  const sendSeatSelection = useCallback((
-    row: string, 
-    seatIndex: number, 
-    status: "selected" | "available" | "reserved", 
-    userId: number
-  ) => {
-    if (clientRef.current?.connected) {
-      clientRef.current.publish({
-        destination: "/app/select",
-        body: JSON.stringify({ 
-          matchId, 
-          row, 
-          seatIndex, 
-          status, 
-          userId 
-        }),
-      });
-    }
-  }, [matchId]);
-
-  useEffect(() => {
-    const socket = new SockJS("http://localhost:8080/ws");
-    const client = new Client({
-      webSocketFactory: () => socket,
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-      onConnect: () => {
-        //console.log("Connected to WebSocket");
-        client.subscribe(`/topic/seats/${matchId}`, (msg) => {
-          try {
-            const body: SeatSelectionMessage = JSON.parse(msg.body);
-           // console.log("Received WebSocket message:", body);
-            onSeatUpdate(body);
-          } catch (error) {
-           // console.error("Error parsing WebSocket message:", error);
-          }
-        });
-      },
-      onDisconnect: () => {
-        //console.log("WebSocket disconnected");
-      },
-      onStompError: (frame) => {
-       // console.error("STOMP error:", frame);
-      },
-    });
-
-    client.activate();
-    clientRef.current = client;
-
-    return () => {
-     // console.log("Cleaning up WebSocket");
-      if (clientRef.current?.active) {
-        clientRef.current.deactivate();
-      }
-    };
-  }, [matchId, onSeatUpdate]);
-
-  useEffect(() => {
-    return () => {
-      if (currentlySelectedKey && userId) {
-        const [row, seatIndex] = currentlySelectedKey.split('-');
-        sendSeatSelection(row, parseInt(seatIndex), "available", userId);
-      }
-    };
-  }, [currentlySelectedKey, userId, sendSeatSelection]);
-
-  return {
-    sendSeatSelection,
-  };
-};
-</file>
-
 <file path="src/lib/utils.ts">
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+</file>
+
+<file path="src/pages/ChangePasswordPage.tsx">
+import { useEffect, useState } from "react";
+import { changePassword } from "@/services/loginService"
+import Swal from "sweetalert2";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+export default function ChangePasswordPage() {
+  const [email, setEmail] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const handleSubmit = async () => {
+
+    try {
+      await changePassword({ email, oldPassword, newPassword });
+      Swal.fire("Success", "Password changed!", "success");
+      setOldPassword("");
+      setNewPassword("");
+    } catch {
+      Swal.fire("Error", "Incorrect old password", "error");
+    }
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-6 mt-3 items-center")}>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Change password</CardTitle>
+
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="grid gap-6">
+              <div className="grid gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Old Password</Label>
+                  </div>
+                  <Input id="password" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)}/>
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">New Password</Label>
+                  </div>
+                  <Input id="password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                </div>
+                <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); handleSubmit()}}>
+                  Change password
+                </Button>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
+  );
 }
 </file>
 
@@ -1045,6 +1094,85 @@ const RegisterPage = () =>{
 export default RegisterPage;
 </file>
 
+<file path="src/pages/StatisticsPage.tsx">
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { statisticsResponse } from "@/types/statistics";
+import { getStatistics } from "@/services/statisticsService";
+import { getUserRole } from "@/services/loginService";
+import { useNavigate } from "react-router-dom";
+
+
+
+const StatisticsPage = () => {
+  const [stats, setStats] = useState<statisticsResponse | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const role = getUserRole();
+    if (role !== "ADMIN") {
+      navigate("/no-access");
+    }
+    const fetchStats = async () => {
+      try {
+        const response = await getStatistics()
+        setStats(response);
+        console.log(response);
+        console.log(stats);
+      } catch (error) {
+        console.error("Failed to load admin statistics", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (!stats) {
+    return <div className="p-6 text-white">Loading admin stats...</div>;
+  }
+
+  return (
+    <div className="p-6 text-white">
+      <h1 className="text-3xl font-bold mb-6">Admin Dashboard – Match Stats</h1>
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Populairste match */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Most Popular Match</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p><strong>Teams:</strong> {stats.popularMatch.homeTeam.name} vs {stats.popularMatch.awayTeam.name}</p>
+            <p><strong>Tickets Sold:</strong> {stats.popularMatch.soldTickets}</p>
+          </CardContent>
+        </Card>
+
+        {/* Totale omzet */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p><strong>€</strong> {stats.totalRevenue.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        {/* Gem. tickets per stadion */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Avg. Tickets per Stadium</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{stats.averageTicketsPerStadium.toFixed(1)} tickets</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default StatisticsPage;
+</file>
+
 <file path="src/pages/Team.tsx">
 import { searchTeams } from "../services/teamService";
 import { Team } from "../types/team";
@@ -1086,6 +1214,32 @@ export const getSeatsForMatch = async (matchId: number, page = 0, size = 200, ro
     });
     return response.data;
 };
+</file>
+
+<file path="src/services/statisticsService.ts">
+import { statisticsResponse } from "@/types/statistics";
+import axios from "axios";
+import { getToken } from "./loginService";
+
+const API_URL = "http://localhost:8080/api/admin/statistics"; 
+
+export const getStatistics = async (): Promise<statisticsResponse> => {
+    try {
+        const response = await axios.get<statisticsResponse>(
+          `${API_URL}/stats`,
+          {
+            headers: {
+              Authorization: `Bearer ${getToken()}`
+            }
+          }
+        );
+        console.log(response.data);
+        return response.data
+    } 
+    catch (error) {
+        throw error
+    }
+}
 </file>
 
 <file path="src/styles/global.css">
@@ -1149,6 +1303,16 @@ export interface Seat {
     seatIndex: number; 
     isReserved: boolean;
 };
+</file>
+
+<file path="src/types/statistics.ts">
+import { Match } from "./match";
+
+export interface statisticsResponse {
+  popularMatch: Match;
+  totalRevenue: number;
+  averageTicketsPerStadium: number;
+}
 </file>
 
 <file path="src/vite-env.d.ts">
@@ -1553,6 +1717,102 @@ const SearchPage = <T,>({ title, placeholder, fetchData, renderItem }: SearchPag
 export default SearchPage;
 </file>
 
+<file path="src/hooks/useSeatWebSocket.tsx">
+// hooks/useSeatWebSocket.tsx
+import { useEffect, useRef, useCallback } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
+interface SeatSelectionMessage {
+  matchId: number;
+  row: string;
+  seatIndex: number;
+  status: "selected" | "available";
+  userId: number;
+  selectedUntil?: string;
+}
+
+export const useSeatWebSocket = (
+  matchId: number, 
+  onSeatUpdate: (message: SeatSelectionMessage) => void,
+  currentlySelectedKey: string | null,
+  userId: number | undefined
+) => {
+  const clientRef = useRef<Client | null>(null);
+
+  const sendSeatSelection = useCallback((
+    row: string, 
+    seatIndex: number, 
+    status: "selected" | "available" | "reserved", 
+    userId: number
+  ) => {
+    if (clientRef.current?.connected) {
+      clientRef.current.publish({
+        destination: "/app/select",
+        body: JSON.stringify({ 
+          matchId, 
+          row, 
+          seatIndex, 
+          status, 
+          userId 
+        }),
+      });
+    }
+  }, [matchId]);
+
+  useEffect(() => {
+    const socket = new SockJS("http://localhost:8080/ws");
+    const client = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+      onConnect: () => {
+        //console.log("Connected to WebSocket");
+        client.subscribe(`/topic/seats/${matchId}`, (msg) => {
+          try {
+            const body: SeatSelectionMessage = JSON.parse(msg.body);
+           // console.log("Received WebSocket message:", body);
+            onSeatUpdate(body);
+          } catch (error) {
+           // console.error("Error parsing WebSocket message:", error);
+          }
+        });
+      },
+      onDisconnect: () => {
+        //console.log("WebSocket disconnected");
+      },
+      onStompError: (frame) => {
+       // console.error("STOMP error:", frame);
+      },
+    });
+
+    client.activate();
+    clientRef.current = client;
+
+    return () => {
+     // console.log("Cleaning up WebSocket");
+      if (clientRef.current?.active) {
+        clientRef.current.deactivate();
+      }
+    };
+  }, [matchId, onSeatUpdate]);
+
+  useEffect(() => {
+    return () => {
+      if (currentlySelectedKey && userId) {
+        const [row, seatIndex] = currentlySelectedKey.split('-');
+        sendSeatSelection(row, parseInt(seatIndex), "available", userId);
+      }
+    };
+  }, [currentlySelectedKey, userId, sendSeatSelection]);
+
+  return {
+    sendSeatSelection,
+  };
+};
+</file>
+
 <file path="src/pages/buyTickets.tsx">
 import "../styles/buyTickets.css";
 import { useState } from "react";
@@ -1732,149 +1992,6 @@ export default defineConfig({
 </html>
 </file>
 
-<file path="src/pages/Home.tsx">
-import "../styles/home.css";
-import { Match } from "../types/match";
-import FeaturedMatches from "../components/featuredMatches";
-import { useEffect, useState } from "react";
-import { getUpComingMatches } from "../services/matchService";
-
-const Home = () =>{
-
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const data = await getUpComingMatches(39, 2023, 5);
-        console.log("API Matches:", data);
-        setMatches(data);
-      } 
-      catch (error) {
-        console.error(error);
-      } 
-      finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMatches();
-  }, []);
-
-
-
-  return (<div className="px-40 flex flex-1 justify-center py-5">
-    <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-      {/* Hero Section */}
-      <div className="@container">
-        <div className="@[480px]:p-4">
-          <div
-            className="flex min-h-[480px] flex-col gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-xl items-center justify-center p-4"
-            style={{
-              backgroundImage:
-                'linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://www.cursor.tue.nl/fileadmin/_processed_/6/1/csm_Profpraat_PSV-stadion_Shutterstock_Uslatar_102e37489c.jpg")',
-            }}
-          >
-            <div className="flex flex-col gap-2 text-center">
-              <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl">
-                Exclusive tickets for the biggest matches
-              </h1>
-              <h2 className="text-white text-sm font-normal leading-normal @[480px]:text-base">
-                Join us on our mission to build the ultimate fan experience. Sign up to be the first to get exclusive access to tickets, experiences and more.
-              </h2>
-            </div>
-            <label className="flex flex-col min-w-40 h-14 w-full max-w-[480px] @[480px]:h-16">
-              <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
-      {/* Featured Matches Section */}
-      {loading ? (
-          <p className="text-white text-sm font-normal">Loading matches...</p>
-        ) : (
-          <FeaturedMatches matches={matches} />
-        )}
-
-    </div>
-  </div>
-    // <div className="home-container">
-    //   <h2>Welcome to the Ticketing App</h2>
-    //   <p>Find and buy tickets easily!</p>
-    // </div>
-
-  );
-}
-export default Home;
-</file>
-
-<file path="src/services/loginService.ts">
-import axios from "axios";
-import { AuthRequest, AuthResponse, DecodedToken, SignupRequest } from "@/types/auth";
-import { jwtDecode } from "jwt-decode";
-const API_URL = "http://localhost:8080/api/auth/users"
-
-export const login = async (data: AuthRequest): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_URL}/login`, data);
-  return response.data;
-};
-
-export const signup = async (data: SignupRequest): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_URL}/signup`, data);
-  return response.data;
-};
-
-export const googleLogin = async (googleToken: string): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_URL}/googleLogin`, 
-    { token: googleToken});
-  return response.data;
-};
-
-export const isLoggedIn = () => {
-    const decoded = decodeToken();
-    if (!decoded)
-         return null;
-    else
-    return decoded.userId;
-}
-
-export const logout = () => {
-  localStorage.removeItem("token");
-};
-
-export const saveToken = (token: string) => {
-  localStorage.setItem("token", token);
-};
-
-export const getToken = () => localStorage.getItem("token");
-
-export const decodeToken = (): DecodedToken | null => {
-    const token = getToken();
-    if (!token) return null;
-    try {
-      return jwtDecode<DecodedToken>(token);
-    } catch {
-      return null;
-    }
-};
-
-export const getUserRole = (): string | null => {
-    const decoded = decodeToken();
-    return decoded?.role || null;
-};
-
-export const changePassword = async (data: {
-  email: string;
-  oldPassword: string;
-  newPassword: string;
-}) => {
-  const response = await axios.put(`${API_URL}/changePassword`, data);
-  return response
-};
-</file>
-
 <file path="src/services/stadiumService.ts">
 import axios from "axios";
 import { Stadium } from "../types/stadium";
@@ -1988,6 +2105,9 @@ export interface DecodedToken {
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
+    "module": "ESNext",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
     "jsx": "react-jsx", 
     "strict": true,
     "esModuleInterop": true,
@@ -1995,7 +2115,233 @@ export interface DecodedToken {
     "paths": {
       "@/*": ["./src/*"]
     }
+    
   }
+}
+</file>
+
+<file path="src/main.tsx">
+if (typeof global === 'undefined') {
+  // @ts-ignore
+  window.global = window;
+}
+
+import { createRoot } from 'react-dom/client'
+import "./styles/global.css";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+import App from './App.tsx'
+
+createRoot(document.getElementById('root')!).render( 
+    <GoogleOAuthProvider clientId="470943653508-sb09ekl3nkmhsham3clnk50anv7fs6cn.apps.googleusercontent.com">
+        <App />
+    </GoogleOAuthProvider>
+)
+</file>
+
+<file path="src/pages/Home.tsx">
+import "../styles/home.css";
+import { Match } from "../types/match";
+import FeaturedMatches from "../components/featuredMatches";
+import { useEffect, useState } from "react";
+import { getUpComingMatches } from "../services/matchService";
+
+const Home = () =>{
+
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const data = await getUpComingMatches(39, 2023, 5);
+        console.log("API Matches:", data);
+        setMatches(data);
+      } 
+      catch (error) {
+        console.error(error);
+      } 
+      finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMatches();
+  }, []);
+
+
+
+  return (<div className="px-40 flex flex-1 justify-center py-5">
+    <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
+      {/* Hero Section */}
+      <div className="@container">
+        <div className="@[480px]:p-4">
+          <div
+            className="flex min-h-[480px] flex-col gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-xl items-center justify-center p-4"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://www.cursor.tue.nl/fileadmin/_processed_/6/1/csm_Profpraat_PSV-stadion_Shutterstock_Uslatar_102e37489c.jpg")',
+            }}
+          >
+            <div className="flex flex-col gap-2 text-center">
+              <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl">
+                Exclusive tickets for the biggest matches
+              </h1>
+              <h2 className="text-white text-sm font-normal leading-normal @[480px]:text-base">
+                Join us on our mission to build the ultimate fan experience. Sign up to be the first to get exclusive access to tickets, experiences and more.
+              </h2>
+            </div>
+            <label className="flex flex-col min-w-40 h-14 w-full max-w-[480px] @[480px]:h-16">
+              <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+      {/* Featured Matches Section */}
+      {loading ? (
+          <p className="text-white text-sm font-normal">Loading matches...</p>
+        ) : (
+          <FeaturedMatches matches={matches} />
+        )}
+
+    </div>
+  </div>
+    // <div className="home-container">
+    //   <h2>Welcome to the Ticketing App</h2>
+    //   <p>Find and buy tickets easily!</p>
+    // </div>
+
+  );
+}
+export default Home;
+</file>
+
+<file path="src/services/loginService.ts">
+import axios from "axios";
+import { AuthRequest, AuthResponse, DecodedToken, SignupRequest } from "@/types/auth";
+import { jwtDecode } from "jwt-decode";
+const API_URL = "http://localhost:8080/api/auth/users"
+
+export const login = async (data: AuthRequest): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/login`, data,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true // Important for CORS with credentials
+    }
+  );
+  return response.data;
+};
+
+export const signup = async (data: SignupRequest): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/signup`, data);
+  return response.data;
+};
+
+export const googleLogin = async (googleToken: string): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_URL}/googleLogin`, 
+    { token: googleToken});
+  return response.data;
+};
+
+export const isLoggedIn = () => {
+    const decoded = decodeToken();
+    if (!decoded)
+         return null;
+    else
+    return decoded.userId;
+}
+
+export const logout = () => {
+  localStorage.removeItem("token");
+};
+
+export const saveToken = (token: string) => {
+  localStorage.setItem("token", token);
+};
+
+export const getToken = () => localStorage.getItem("token");
+
+export const decodeToken = (): DecodedToken | null => {
+    const token = getToken();
+    if (!token) return null;
+    try {
+      return jwtDecode<DecodedToken>(token);
+    } catch {
+      return null;
+    }
+};
+
+export const getUserRole = (): string | null => {
+    const decoded = decodeToken();
+    return decoded?.role || null;
+};
+
+export const changePassword = async (data: {
+  email: string;
+  oldPassword: string;
+  newPassword: string;
+}) => {
+  const response = await axios.put(`${API_URL}/changePassword`, data);
+  return response
+};
+</file>
+
+<file path="src/services/teamService.ts">
+import axios from "axios";
+import { Team } from "../types/team";
+import { getToken } from "./loginService";
+
+
+const API_URL = "http://localhost:8080/api/auth/teams/search"; 
+
+export const searchTeams = async (
+    searchQuery: string,
+    page: number,
+    size: number
+  ): Promise<Team[]> => {
+    try {
+        const response = await axios.get(API_URL, {
+            params:{
+                searchQuery,
+                page,
+                size,
+            },
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+            }
+          });
+      const transformedTeams: Team[] = response.data.teams.map((team: any) => ({
+        id: team.id,
+        apiId: team.apiId,
+        name: team.name,
+        logo: team.logo, 
+      }));
+      return transformedTeams;
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      return [];
+    }
+};
+</file>
+
+<file path="src/types/match.ts">
+import { Stadium } from "./stadium";
+import { Team } from "./team";
+
+export interface Match {
+  id: number;
+  apiId: number;
+  image: string;
+  title: string;
+  location: string;
+  awayTeam: Team;
+  homeTeam: Team;
+  stadium: Stadium;
+  soldTickets: number;
+  date: Date;
 }
 </file>
 
@@ -2153,81 +2499,6 @@ export function LoginForm({
                 />    */}
 </file>
 
-<file path="src/main.tsx">
-if (typeof global === 'undefined') {
-  // @ts-ignore
-  window.global = window;
-}
-
-import { createRoot } from 'react-dom/client'
-import "./styles/global.css";
-import { GoogleOAuthProvider } from "@react-oauth/google";
-
-import App from './App.tsx'
-
-createRoot(document.getElementById('root')!).render( 
-    <GoogleOAuthProvider clientId="470943653508-sb09ekl3nkmhsham3clnk50anv7fs6cn.apps.googleusercontent.com">
-        <App />
-    </GoogleOAuthProvider>
-)
-</file>
-
-<file path="src/services/teamService.ts">
-import axios from "axios";
-import { Team } from "../types/team";
-import { getToken } from "./loginService";
-
-
-const API_URL = "http://localhost:8080/api/auth/teams/search"; 
-
-export const searchTeams = async (
-    searchQuery: string,
-    page: number,
-    size: number
-  ): Promise<Team[]> => {
-    try {
-        const response = await axios.get(API_URL, {
-            params:{
-                searchQuery,
-                page,
-                size,
-            },
-            headers: {
-                Authorization: `Bearer ${getToken()}`
-            }
-          });
-      const transformedTeams: Team[] = response.data.teams.map((team: any) => ({
-        id: team.id,
-        apiId: team.apiId,
-        name: team.name,
-        logo: team.logo, 
-      }));
-      return transformedTeams;
-    } catch (error) {
-      console.error("Error fetching teams:", error);
-      return [];
-    }
-};
-</file>
-
-<file path="src/types/match.ts">
-import { Stadium } from "./stadium";
-import { Team } from "./team";
-
-export interface Match {
-  id: number;
-  apiId: number;
-  image: string;
-  title: string;
-  location: string;
-  awayTeam: Team;
-  homeTeam: Team;
-  stadium: Stadium;
-  soldTickets: number;
-  date: Date;
-}
-</file>
-
 <file path="package.json">
 {
   "name": "hattrickets_frontend",
@@ -2270,6 +2541,7 @@ export interface Match {
     "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "autoprefixer": "^10.4.21",
+    "cypress": "^14.5.0",
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
@@ -2288,7 +2560,7 @@ export interface Match {
 import {Outlet, Link } from "react-router-dom";
 import "../styles/global.css";
 import "tailwindcss";
-import { isLoggedIn, logout } from "@/services/loginService";
+import { getUserRole, isLoggedIn, logout } from "@/services/loginService";
 import { useEffect, useState } from "react";
 
 
@@ -2298,6 +2570,7 @@ import { useEffect, useState } from "react";
 const Layout = () => {
 
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const role = getUserRole()
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -2360,9 +2633,14 @@ const Layout = () => {
             <Link className="text-white text-sm font-medium leading-normal" to="/teams">
               Teams
             </Link>
-            <Link className="text-white text-sm font-medium leading-normal" to="/buy-ticket">
+            {/* <Link className="text-white text-sm font-medium leading-normal" to="/buy-ticket">
               Buy Ticket
+            </Link> */}
+            {role === "ADMIN" && (
+            <Link className="text-white text-sm font-medium leading-normal" to="/admin/stats">
+              Statistics
             </Link>
+             )}
           </div>
         </div>
         <div className="flex flex-1 justify-end gap-8">
@@ -2728,43 +3006,6 @@ export default function MatchDetails() {
   }
 </file>
 
-<file path="src/router.tsx">
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-import Home from "./pages/Home";
-import BuyTicket from './pages/buyTickets';
-import Layout from './components/layout';
-import StadiumPage  from './pages/Stadium';
-import TeamPage from './pages/Team';
-import MatchDetails from './pages/MatchDetails';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import MatchPage from './pages/MatchPage';
-import ChangePasswordPage from './pages/ChangePasswordPage';
-
-const AppRouter = () => {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout/>}>
-          <Route index element={<Home />} />
-          <Route path="/buy-ticket" element={<BuyTicket />} />
-          <Route path="/stadiums" element={<StadiumPage />} />
-          <Route path="/teams" element={<TeamPage />} />
-          <Route path="/matches" element={<MatchPage/>} />
-          <Route path="/match/:matchId" element={<MatchDetails />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage/>}/>
-          <Route path="/changePassword" element={<ChangePasswordPage/>}/>
-        </Route>  
-      </Routes>
-    </Router>
-  );
-};
-
-export default AppRouter;
-</file>
-
 <file path="src/services/matchService.ts">
 import axios from "axios";
 import { Match } from "../types/match";
@@ -2874,6 +3115,47 @@ export const filterMatches = async (
       throw new Error("Failed to fetch matches");
     }
 }
+</file>
+
+<file path="src/router.tsx">
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import Home from "./pages/Home";
+import BuyTicket from './pages/buyTickets';
+import Layout from './components/layout';
+import StadiumPage  from './pages/Stadium';
+import TeamPage from './pages/Team';
+import MatchDetails from './pages/MatchDetails';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import MatchPage from './pages/MatchPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
+import StatisticsPage from './pages/StatisticsPage'
+import NoAccessPage from './pages/NoAccessPage';
+
+const AppRouter = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout/>}>
+          <Route index element={<Home />} />
+          <Route path="/buy-ticket" element={<BuyTicket />} />
+          <Route path="/stadiums" element={<StadiumPage />} />
+          <Route path="/teams" element={<TeamPage />} />
+          <Route path="/matches" element={<MatchPage/>} />
+          <Route path="/match/:matchId" element={<MatchDetails />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage/>}/>
+          <Route path="/changePassword" element={<ChangePasswordPage/>}/>
+          <Route path="/admin/stats" element={<StatisticsPage />} />
+          <Route path="/no-access" element={<NoAccessPage />} />
+        </Route>  
+      </Routes>
+    </Router>
+  );
+};
+
+export default AppRouter;
 </file>
 
 </files>

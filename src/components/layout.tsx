@@ -1,7 +1,7 @@
 import {Outlet, Link } from "react-router-dom";
 import "../styles/global.css";
 import "tailwindcss";
-import { isLoggedIn, logout } from "@/services/loginService";
+import { getUserRole, isLoggedIn, logout } from "@/services/loginService";
 import { useEffect, useState } from "react";
 
 
@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 const Layout = () => {
 
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const role = getUserRole()
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -73,9 +74,14 @@ const Layout = () => {
             <Link className="text-white text-sm font-medium leading-normal" to="/teams">
               Teams
             </Link>
-            <Link className="text-white text-sm font-medium leading-normal" to="/buy-ticket">
+            {/* <Link className="text-white text-sm font-medium leading-normal" to="/buy-ticket">
               Buy Ticket
+            </Link> */}
+            {role === "ADMIN" && (
+            <Link className="text-white text-sm font-medium leading-normal" to="/admin/stats">
+              Statistics
             </Link>
+             )}
           </div>
         </div>
         <div className="flex flex-1 justify-end gap-8">

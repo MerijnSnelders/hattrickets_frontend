@@ -4,7 +4,14 @@ import { jwtDecode } from "jwt-decode";
 const API_URL = "http://localhost:8080/api/auth/users"
 
 export const login = async (data: AuthRequest): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_URL}/login`, data);
+  const response = await axios.post<AuthResponse>(`${API_URL}/login`, data,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true // Important for CORS with credentials
+    }
+  );
   return response.data;
 };
 

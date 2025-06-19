@@ -2,13 +2,20 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { statisticsResponse } from "@/types/statistics";
 import { getStatistics } from "@/services/statisticsService";
+import { getUserRole } from "@/services/loginService";
+import { useNavigate } from "react-router-dom";
 
 
 
 const StatisticsPage = () => {
   const [stats, setStats] = useState<statisticsResponse | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const role = getUserRole();
+    if (role !== "ADMIN") {
+      navigate("/no-access");
+    }
     const fetchStats = async () => {
       try {
         const response = await getStatistics()

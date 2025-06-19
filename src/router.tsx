@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import MatchPage from './pages/MatchPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import StatisticsPage from './pages/StatisticsPage'
+import NoAccessPage from './pages/NoAccessPage';
 
 const AppRouter = () => {
   return (
@@ -27,6 +28,7 @@ const AppRouter = () => {
           <Route path="/register" element={<RegisterPage/>}/>
           <Route path="/changePassword" element={<ChangePasswordPage/>}/>
           <Route path="/admin/stats" element={<StatisticsPage />} />
+          <Route path="/no-access" element={<NoAccessPage />} />
         </Route>  
       </Routes>
     </Router>
