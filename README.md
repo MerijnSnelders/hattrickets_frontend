@@ -102,3 +102,8 @@ I made a simple design first and then converted it into code. After that I conne
 - Remove unused dependencies
 - Stop committing generated files
 - Expand the Cypress tests
+
+## Preview
+
+https://github.com/user-attachments/assets/426a264e-90f3-41a4-9d27-da584c3cbd7c
+
